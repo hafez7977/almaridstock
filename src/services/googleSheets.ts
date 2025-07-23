@@ -95,17 +95,30 @@ class GoogleSheetsService {
 
     console.log('Headers from Google Sheets:', headers);
     console.log('First data row:', dataRows[0]);
-    console.log('Sample car data mapping:');
+    
+    // Show all headers with their indexes for debugging
+    headers.forEach((header, index) => {
+      console.log(`Header ${index}: "${header}" (lowercase: "${header.toLowerCase()}")`);
+    });
 
     return dataRows.map((row, index) => {
       const car: any = { id: `sheet_${index}` };
       
-      console.log(`Processing row ${index + 1}:`, row);
+      // Only log first row for debugging
+      if (index === 0) {
+        console.log(`Processing first row:`, row);
+      }
       
       headers.forEach((header, colIndex) => {
         const value = row[colIndex] || '';
+        const headerLower = header.toLowerCase().trim();
         
-        switch (header.toLowerCase()) {
+        // Debug: show all header processing for first row
+        if (index === 0) {
+          console.log(`  Column ${colIndex}: header="${header}" -> value="${value}"`);
+        }
+        
+        switch (headerLower) {
           case 'sn':
           case 'serial number':
           case 'serial no':
@@ -215,6 +228,11 @@ class GoogleSheetsService {
             break;
         }
       });
+
+      // Debug: show final car object for first row
+      if (index === 0) {
+        console.log('Final car object for first row:', car);
+      }
 
       return car as Car;
     });
