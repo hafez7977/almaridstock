@@ -112,12 +112,12 @@ export const SpecsUpload = () => {
       return;
     }
 
-    // Validate all files have spec codes
-    const invalidFiles = fileUploads.filter(upload => !upload.specCode.trim());
+    // Validate all files have spec codes (they should auto-extract from filename)
+    const invalidFiles = fileUploads.filter(upload => !upload.specCode || upload.specCode.trim() === '');
     if (invalidFiles.length > 0) {
       toast({
-        title: "Missing spec codes",
-        description: `Please provide spec codes for all files.`,
+        title: "Invalid filenames",
+        description: `Some files don't have valid spec codes. Ensure filenames end with .pdf (e.g., "10535.pdf").`,
         variant: "destructive",
       });
       return;
@@ -297,7 +297,7 @@ export const SpecsUpload = () => {
                 
                 <Button 
                   onClick={handleBatchUpload} 
-                  disabled={uploading || fileUploads.some(u => !u.specCode.trim())}
+                  disabled={uploading}
                   className="w-full"
                 >
                   {uploading ? "Uploading..." : `Upload ${fileUploads.length} Files`}
