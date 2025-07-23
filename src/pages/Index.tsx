@@ -22,6 +22,7 @@ const Index = () => {
     colorExt: 'all',
     branch: 'all',
     supplier: 'all',
+    barcode: 'all',
   });
 
   const { isAuthenticated, spreadsheetId } = useGoogleAuth();
@@ -58,16 +59,17 @@ const Index = () => {
 
     return currentCars.filter(car => {
       const matchesSearch = !filters.search || 
-        car.chassisNo.toLowerCase().includes(filters.search.toLowerCase()) ||
-        car.barCode.toLowerCase().includes(filters.search.toLowerCase()) ||
-        car.name.toLowerCase().includes(filters.search.toLowerCase());
+        car.chassisNo?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        car.barCode?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        car.name?.toLowerCase().includes(filters.search.toLowerCase());
       
       const matchesStatus = filters.status === 'all' || car.status === filters.status;
       const matchesModel = filters.model === 'all' || car.model === filters.model;
       const matchesBranch = filters.branch === 'all' || car.branch === filters.branch;
       const matchesColor = filters.colorExt === 'all' || car.colourExt === filters.colorExt;
+      const matchesBarcode = filters.barcode === 'all' || car.barCode === filters.barcode;
       
-      return matchesSearch && matchesStatus && matchesModel && matchesBranch && matchesColor;
+      return matchesSearch && matchesStatus && matchesModel && matchesBranch && matchesColor && matchesBarcode;
     });
   }, [stockCars, incomingCars, ksaCars, activeTab, filters]);
 

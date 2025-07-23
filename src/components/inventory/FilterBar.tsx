@@ -25,7 +25,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     colorExt: 'all',
     colorInt: 'all',
     branch: 'all',
-    supplier: 'all'
+    supplier: 'all',
+    barcode: 'all'
   });
 
   // Extract unique values from cars data
@@ -35,6 +36,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     const branches = [...new Set(cars.map(car => car.branch).filter(Boolean))];
     const colorsExt = [...new Set(cars.map(car => car.colourExt).filter(Boolean))];
     const suppliers = [...new Set(cars.map(car => car.supplier).filter(Boolean))];
+    const barcodes = [...new Set(cars.map(car => car.barCode).filter(Boolean))];
 
     return {
       statuses: statuses.sort(),
@@ -42,6 +44,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       branches: branches.sort(),
       colorsExt: colorsExt.sort(),
       suppliers: suppliers.sort(),
+      barcodes: barcodes.sort(),
     };
   }, [cars]);
 
@@ -59,7 +62,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       colorExt: 'all',
       colorInt: 'all',
       branch: 'all',
-      supplier: 'all'
+      supplier: 'all',
+      barcode: 'all'
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
@@ -69,7 +73,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     filters.status !== 'all' || 
     filters.model !== 'all' || 
     filters.colorExt !== 'all' || 
-    filters.branch !== 'all';
+    filters.branch !== 'all' ||
+    filters.barcode !== 'all';
 
   return (
     <Card className="mb-6">
@@ -118,6 +123,18 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
                 <SelectItem value="all">All Branches</SelectItem>
                 {uniqueValues.branches.map(branch => (
                   <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.barcode} onValueChange={(value) => handleFilterChange('barcode', value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Barcode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Barcodes</SelectItem>
+                {uniqueValues.barcodes.map(barcode => (
+                  <SelectItem key={barcode} value={barcode}>{barcode}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
