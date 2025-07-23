@@ -101,7 +101,21 @@ export const sortCarsWithPriority = (cars: Car[]): Car[] => {
       if (!aIsToyota && bIsToyota) return -1; // Non-Toyota goes before Toyota
     }
     
-    // If same priority, sort by SN
+    // Sort by name first (group same names together)
+    const aName = a.name?.toLowerCase() || '';
+    const bName = b.name?.toLowerCase() || '';
+    if (aName !== bName) {
+      return aName.localeCompare(bName);
+    }
+    
+    // Within same name, sort by model (year)
+    const aModel = a.model?.toLowerCase() || '';
+    const bModel = b.model?.toLowerCase() || '';
+    if (aModel !== bModel) {
+      return aModel.localeCompare(bModel);
+    }
+    
+    // If same name and model, sort by SN
     return (a.sn || 0) - (b.sn || 0);
   });
 };
