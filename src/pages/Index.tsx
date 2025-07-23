@@ -107,11 +107,31 @@ const Index = () => {
     });
   }, [stockCars, incomingCars, ksaCars, activeTab, filters]);
 
+  // Helper function to check if status is "available" (case-insensitive with minor misspelling tolerance)
+  const isAvailable = (status: string) => {
+    if (!status) return false;
+    const cleanStatus = status.toLowerCase().trim();
+    return cleanStatus === 'available' || 
+           cleanStatus === 'availabe' || 
+           cleanStatus === 'availble' || 
+           cleanStatus === 'avaliable' ||
+           cleanStatus.includes('available');
+  };
+
   // Cars that need follow up (Booked status and aging > 3 days)
   const followUpCars = useMemo(() => {
     if (!stockCars || !incomingCars || !ksaCars) return [];
     const allCars = [...stockCars, ...incomingCars, ...ksaCars];
     return allCars.filter(car => car.status === 'Booked' && car.aging > 3);
+  }, [stockCars, incomingCars, ksaCars]);
+
+  // Available cars counts
+  const availableCounts = useMemo(() => {
+    return {
+      stock: stockCars?.filter(car => isAvailable(car.status)).length || 0,
+      incoming: incomingCars?.filter(car => isAvailable(car.status)).length || 0,
+      ksa: ksaCars?.filter(car => isAvailable(car.status)).length || 0,
+    };
   }, [stockCars, incomingCars, ksaCars]);
 
   const renderContent = () => {
@@ -231,10 +251,13 @@ const Index = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Total Stock</CardTitle>
+                    <CardTitle className="text-sm font-medium">Stock Cars</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stockCars?.length || 0}</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Available: <span className="text-primary font-medium">{availableCounts.stock}</span>
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -243,6 +266,9 @@ const Index = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{incomingCars?.length || 0}</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Available: <span className="text-primary font-medium">{availableCounts.incoming}</span>
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -251,6 +277,9 @@ const Index = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{ksaCars?.length || 0}</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Available: <span className="text-primary font-medium">{availableCounts.ksa}</span>
+                    </p>
                   </CardContent>
                 </Card>
               </div>
