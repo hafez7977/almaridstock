@@ -123,6 +123,20 @@ export const SpecsUpload = () => {
       return;
     }
 
+    // Check for duplicate file names that already exist in the database
+    const duplicateFiles = fileUploads.filter(upload => 
+      specs.some(existingSpec => existingSpec.file_name === upload.file.name)
+    );
+    
+    if (duplicateFiles.length > 0) {
+      toast({
+        title: "Duplicate files detected",
+        description: `The following files already exist: ${duplicateFiles.map(f => f.file.name).join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -231,6 +245,42 @@ export const SpecsUpload = () => {
       toast({
         title: "Download failed",
         description: "Failed to download the file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (spec: SpecFile) => {
+    if (!isAdmin) return;
+    
+    try {
+      // Delete from storage first
+      const { error: storageError } = await supabase.storage
+        .from('spec_files')
+        .remove([spec.file_path]);
+
+      if (storageError) throw storageError;
+
+      // Then delete from database
+      const { error: dbError } = await supabase
+        .from('specs')
+        .delete()
+        .eq('id', spec.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "File deleted",
+        description: `${spec.file_name} has been deleted successfully.`,
+      });
+
+      // Refresh the specs list
+      fetchSpecs();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete the file.",
         variant: "destructive",
       });
     }
@@ -356,13 +406,27 @@ export const SpecsUpload = () => {
                     </TableCell>
                     <TableCell>{spec.uploader_name}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(spec)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(spec)}
+                          title="Download file"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(spec)}
+                            title="Delete file (Admin only)"
+                            className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
