@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Car } from "@/types/car";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface ReportGeneratorProps {
   cars: Car[];
@@ -20,7 +21,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus === 'availble' || 
         cleanStatus === 'avaliable' ||
         cleanStatus.includes('available')) {
-      return '#dcfce7'; // Light green background
+      return 'FF90EE90'; // Light green
     }
     
     // Booked - Yellow
@@ -28,12 +29,12 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus === 'bookd' || 
         cleanStatus === 'booket' ||
         cleanStatus.includes('booked')) {
-      return '#fef3c7'; // Light yellow background
+      return 'FFFFFF00'; // Yellow
     }
     
     // UNRECEIVED - Purple
     if (status === 'UNRECEIVED') {
-      return '#e9d5ff'; // Light purple background
+      return 'FFE6E6FA'; // Light purple
     }
     
     // Received ADV - Light yellow
@@ -42,10 +43,10 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus.includes('received advance') ||
         cleanStatus.includes('recieved adv') ||
         (cleanStatus.includes('received') && cleanStatus.includes('adv'))) {
-      return '#fef3c7'; // Light yellow background
+      return 'FFFFFFE0'; // Light yellow
     }
     
-    return '#f3f4f6'; // Default gray
+    return 'FFFFFFFF'; // White
   };
 
   const generateReport = () => {
@@ -109,87 +110,104 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       return 0;
     });
 
-    // Create HTML content with styled table
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${tabName} Available & Booked Cars Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; text-align: center; }
-            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            .date { text-align: center; color: #666; margin-bottom: 20px; }
-          </style>
-        </head>
-        <body>
-          <h1>${tabName} Available & Booked Cars Report</h1>
-          <div class="date">Generated on: ${new Date().toLocaleDateString()}</div>
-          <table>
-            <thead>
-              <tr>
-                <th>SN</th>
-                <th>Status</th>
-                <th>Name</th>
-                <th>Model</th>
-                <th>Barcode</th>
-                <th>Chassis No</th>
-                <th>Spec Code</th>
-                <th>Color Ext</th>
-                <th>Color Int</th>
-                <th>Branch</th>
-                <th>Customer</th>
-                <th>SP</th>
-                <th>AMPI #</th>
-                <th>Received Date</th>
-                <th>Location</th>
-                <th>Aging (Days)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${sortedCars.map(car => `
-                <tr style="background-color: ${getStatusColor(car.status)};">
-                  <td>${car.sn}</td>
-                  <td><strong>${car.status}</strong></td>
-                  <td>${car.name || '-'}</td>
-                  <td>${car.model || '-'}</td>
-                  <td>${car.barCode || '-'}</td>
-                  <td>${car.chassisNo || '-'}</td>
-                  <td>${car.specCode || '-'}</td>
-                  <td>${car.colourExt || '-'}</td>
-                  <td>${car.colourInt || '-'}</td>
-                  <td>${car.branch || '-'}</td>
-                  <td>${car.customerDetails || '-'}</td>
-                  <td>${car.sp || '-'}</td>
-                  <td>${car.ampi || '-'}</td>
-                  <td>${car.receivedDate || '-'}</td>
-                  <td>${car.place || '-'}</td>
-                  <td>${car.aging}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <div style="margin-top: 20px; text-align: center; color: #666;">
-            Total Cars: ${sortedCars.length}
-          </div>
-        </body>
-      </html>
-    `;
+    // Create worksheet data
+    const headers = [
+      'SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
+      'Color Ext', 'Color Int', 'Branch', 'Customer', 'SP', 'AMPI #', 
+      'Received Date', 'Location', 'Aging (Days)'
+    ];
 
-    // Create and download file
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
+    const data = [
+      headers,
+      ...sortedCars.map(car => [
+        car.sn,
+        car.status,
+        car.name || '',
+        car.model || '',
+        car.barCode || '',
+        car.chassisNo || '',
+        car.specCode || '',
+        car.colourExt || '',
+        car.colourInt || '',
+        car.branch || '',
+        car.customerDetails || '',
+        car.sp || '',
+        car.ampi || '',
+        car.receivedDate || '',
+        car.place || '',
+        car.aging
+      ])
+    ];
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Apply styling
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
     
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${tabName}_Available_Booked_Report_${new Date().toISOString().split('T')[0]}.html`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Style header row
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellRef]) continue;
+      ws[cellRef].s = {
+        fill: { fgColor: { rgb: 'FFD3D3D3' } }, // Light gray
+        font: { bold: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' }
+        }
+      };
+    }
+
+    // Style data rows with status colors
+    for (let row = 1; row <= sortedCars.length; row++) {
+      const car = sortedCars[row - 1];
+      const statusColor = getStatusColor(car.status);
+      
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!ws[cellRef]) continue;
+        ws[cellRef].s = {
+          fill: { fgColor: { rgb: statusColor } },
+          border: {
+            top: { style: 'thin' },
+            bottom: { style: 'thin' },
+            left: { style: 'thin' },
+            right: { style: 'thin' }
+          }
+        };
+      }
+    }
+
+    // Set column widths
+    ws['!cols'] = [
+      { width: 8 },   // SN
+      { width: 12 },  // Status
+      { width: 20 },  // Name
+      { width: 15 },  // Model
+      { width: 15 },  // Barcode
+      { width: 20 },  // Chassis No
+      { width: 12 },  // Spec Code
+      { width: 12 },  // Color Ext
+      { width: 12 },  // Color Int
+      { width: 12 },  // Branch
+      { width: 20 },  // Customer
+      { width: 10 },  // SP
+      { width: 12 },  // AMPI #
+      { width: 15 },  // Received Date
+      { width: 15 },  // Location
+      { width: 12 }   // Aging
+    ];
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, `${tabName} Report`);
+
+    // Generate Excel file and download
+    const fileName = `${tabName}_Available_Booked_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 
     toast({
       title: "Report Generated",
