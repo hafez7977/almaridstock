@@ -33,7 +33,14 @@ export const isBooked = (status: string): boolean => {
 
 export const getStatusPriority = (status: string): number => {
   if (isAvailable(status)) return 1;
-  if (isBooked(status) || status?.toLowerCase() === 'unreceived' || status === 'UNRECEIVED') return 2;
+  if (isBooked(status) || 
+      status?.toLowerCase() === 'unreceived' || 
+      status === 'UNRECEIVED' ||
+      status?.toLowerCase().includes('received adv') ||
+      status?.toLowerCase().includes('receved adv') ||
+      status?.toLowerCase().includes('received advance') ||
+      status?.toLowerCase().includes('recieved adv') ||
+      (status?.toLowerCase().includes('received') && status?.toLowerCase().includes('adv'))) return 2;
   return 3; // Everything else
 };
 
@@ -51,7 +58,14 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
         case 'Available':
           return isAvailable(car.status);
         case 'Booked':
-          return isBooked(car.status) || car.status?.toLowerCase() === 'unreceived' || car.status === 'UNRECEIVED';
+          return isBooked(car.status) || 
+                 car.status?.toLowerCase() === 'unreceived' || 
+                 car.status === 'UNRECEIVED' ||
+                 car.status?.toLowerCase().includes('received adv') ||
+                 car.status?.toLowerCase().includes('receved adv') ||
+                 car.status?.toLowerCase().includes('received advance') ||
+                 car.status?.toLowerCase().includes('recieved adv') ||
+                 (car.status?.toLowerCase().includes('received') && car.status?.toLowerCase().includes('adv'));
         case 'Sold':
           return car.status?.toLowerCase().includes('sold') || 
                  car.status?.toLowerCase() === 'sol' || 
