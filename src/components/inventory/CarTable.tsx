@@ -83,13 +83,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                   <TableCell className="font-mono text-sm">{car.barCode || '-'}</TableCell>
                   <TableCell className="font-mono text-sm">{car.chassisNo}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-4 h-4 rounded border border-border"
-                        style={{ backgroundColor: car.colourExt?.toLowerCase() || '#ccc' }}
-                      />
-                      {car.colourExt || '-'}
-                    </div>
+                    {car.colourExt || '-'}
                   </TableCell>
                   <TableCell>{car.branch}</TableCell>
                   <TableCell className="max-w-32 truncate">{car.customerDetails || '-'}</TableCell>
