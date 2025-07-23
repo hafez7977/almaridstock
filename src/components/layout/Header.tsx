@@ -32,7 +32,7 @@ export const Header = () => {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-foreground">Al Marid Motors</h1>
-              <p className="text-sm text-muted-foreground">Car Dealership Management System</p>
+              <p className="text-sm text-muted-foreground">Stock System</p>
             </div>
           </div>
           
