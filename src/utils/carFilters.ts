@@ -62,7 +62,8 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
     const matchesSearch = !filters.search || 
       car.chassisNo?.toLowerCase().includes(filters.search.toLowerCase()) ||
       car.barCode?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      car.name?.toLowerCase().includes(filters.search.toLowerCase());
+      car.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      car.specCode?.toLowerCase().includes(filters.search.toLowerCase());
     
     // Status filter with normalization
     const matchesStatus = filters.statuses.length === 0 || filters.statuses.some(selectedStatus => {
