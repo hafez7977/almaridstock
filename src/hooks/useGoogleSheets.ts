@@ -66,7 +66,8 @@ export const useGoogleSheets = () => {
       try {
         const rows = await googleSheetsService.readSheet(spreadsheetId, 'KSA!A:W');
         console.log('KSA rows fetched:', rows?.length || 0);
-        return googleSheetsService.parseCarData(rows);
+        // Use special KSA parser for KSA data
+        return googleSheetsService.parseKSAData(rows);
       } catch (error) {
         console.error('Error fetching KSA cars:', error);
         throw error;

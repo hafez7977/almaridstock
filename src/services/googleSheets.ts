@@ -86,6 +86,76 @@ class GoogleSheetsService {
     });
   }
 
+  
+  // Parse KSA data with special handling for its unique structure
+  parseKSAData(rows: any[][]): Car[] {
+    if (!rows || rows.length < 2) return [];
+
+    console.log('Parsing KSA data, total rows:', rows.length);
+    console.log('First few rows:', rows.slice(0, 5));
+
+    const cars: Car[] = [];
+    let carCounter = 1;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      
+      // Skip empty rows
+      if (!row || row.every(cell => !cell || cell.trim() === '')) {
+        continue;
+      }
+
+      // Skip reference rows (like "CMA-KSA-50-MAR-24")
+      if (row.length === 1 && row[0] && typeof row[0] === 'string' && row[0].includes('-')) {
+        continue;
+      }
+
+      // Skip header rows (containing "STATUS" and other headers)
+      if (row[0] === 'STATUS' || (row.includes('STATUS') && row.includes('MODEL'))) {
+        continue;
+      }
+
+      // This should be a data row
+      if (row.length >= 5 && row[0] && row[0] !== '') {
+        const car: any = {
+          id: `ksa_${carCounter}`,
+          sn: carCounter++,
+          status: row[0] || 'Available',
+          name: row[1] || '',
+          barCode: row[2] || '',
+          model: row[3] || '',
+          specCode: row[5] || '', // Usually at index 5 in KSA data
+          description: row[6] || '',
+          colourExt: row[7] || '',
+          colourInt: row[8] || '',
+          chassisNo: row[9] || '',
+          engineNo: row[10] || '',
+          supplier: row[11] || '',
+          branch: row[12] || '',
+          place: row[13] || '',
+          customerDetails: row[14] || '',
+          sp: row[15] || '',
+          sd: row[16] || '',
+          invNo: row[17] || '',
+          ampi: row[18] || '',
+          paper: row[19] || '',
+          deal: row[20] || '',
+          receivedDate: row[21] || '',
+          aging: parseInt(row[22]) || 0
+        };
+
+        // Only add cars with meaningful data
+        if (car.status && car.status !== 'STATUS') {
+          cars.push(car as Car);
+          console.log(`Added KSA car ${carCounter - 1}:`, car);
+        }
+      }
+    }
+
+    console.log(`Parsed ${cars.length} cars from KSA data`);
+    return cars;
+  }
+
   // Convert Google Sheets rows to Car objects
   parseCarData(rows: any[][]): Car[] {
     if (!rows || rows.length < 2) return [];
@@ -142,6 +212,7 @@ class GoogleSheetsService {
             break;
           case 'speccode':
           case 'spec code':
+          case 'spec.code':
             car.specCode = value;
             break;
           case 'description':
@@ -190,6 +261,7 @@ class GoogleSheetsService {
             break;
           case 'engineno':
           case 'engine no':
+          case 'engine no.':
             car.engineNo = value;
             break;
           case 'supplier':
@@ -199,6 +271,7 @@ class GoogleSheetsService {
             car.branch = value;
             break;
           case 'place':
+          case 'location':
             car.place = value;
             break;
           case 'customerdetails':
@@ -209,23 +282,28 @@ class GoogleSheetsService {
             car.sp = value;
             break;
           case 'sd':
+          case 's/d':
             car.sd = value;
             break;
           case 'invno':
           case 'inv no':
+          case 'inv #':
             car.invNo = value;
             break;
           case 'ampi':
+          case 'ampi #':
             car.ampi = value;
             break;
           case 'paper':
             car.paper = value;
             break;
           case 'deal':
+          case 'deal code':
             car.deal = value;
             break;
           case 'receiveddate':
           case 'received date':
+          case 'receiving date':
             car.receivedDate = value;
             break;
           case 'aging':
