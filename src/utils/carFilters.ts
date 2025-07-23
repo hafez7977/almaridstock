@@ -43,8 +43,33 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
       car.barCode?.toLowerCase().includes(filters.search.toLowerCase()) ||
       car.name?.toLowerCase().includes(filters.search.toLowerCase());
     
-    // Multi-select filters
-    const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(car.status);
+    // Status filter with normalization
+    const matchesStatus = filters.statuses.length === 0 || filters.statuses.some(selectedStatus => {
+      switch (selectedStatus) {
+        case 'Available':
+          return isAvailable(car.status);
+        case 'Booked':
+          return isBooked(car.status);
+        case 'Sold':
+          return car.status?.toLowerCase().includes('sold') || 
+                 car.status?.toLowerCase() === 'sol' || 
+                 car.status?.toLowerCase() === 'sould';
+        case 'Received Full':
+          return car.status?.toLowerCase().includes('received') && 
+                 car.status?.toLowerCase().includes('full');
+        case 'Received ADV':
+          return car.status?.toLowerCase().includes('received') && 
+                 car.status?.toLowerCase().includes('adv');
+        case 'Invoiced':
+          return car.status?.toLowerCase().includes('invoiced') || 
+                 car.status?.toLowerCase() === 'invocied' || 
+                 car.status?.toLowerCase() === 'invoicd';
+        default:
+          return car.status === selectedStatus;
+      }
+    });
+    
+    // Other filters
     const matchesModel = filters.models.length === 0 || filters.models.includes(car.model || '');
     const matchesBranch = filters.branches.length === 0 || filters.branches.includes(car.branch || '');
     const matchesColor = filters.colorsExt.length === 0 || filters.colorsExt.includes(car.colourExt || '');

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { MultiFilters } from "@/utils/carFilters";
+import { MultiFilters, isAvailable, isBooked } from "@/utils/carFilters";
 import { Search, X } from "lucide-react";
 
 interface FilterBarProps {
@@ -33,14 +33,43 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     const safeCars = Array.isArray(cars) ? cars : [];
     console.log('SafeCars:', safeCars.length, 'items');
     
-    const statuses = [...new Set(safeCars.map(car => car?.status).filter(Boolean))];
+    // Normalize statuses - group variations under standard names
+    const normalizeStatus = (status: string): string => {
+      if (!status) return status;
+      
+      if (isAvailable(status)) return 'Available';
+      if (isBooked(status)) return 'Booked';
+      
+      // For other statuses, check common patterns
+      const cleanStatus = status.toLowerCase().trim();
+      
+      if (cleanStatus.includes('sold') || cleanStatus === 'sol' || cleanStatus === 'sould') {
+        return 'Sold';
+      }
+      if (cleanStatus.includes('received') && cleanStatus.includes('full')) {
+        return 'Received Full';
+      }
+      if (cleanStatus.includes('received') && cleanStatus.includes('adv')) {
+        return 'Received ADV';
+      }
+      if (cleanStatus.includes('invoiced') || cleanStatus === 'invocied' || cleanStatus === 'invoicd') {
+        return 'Invoiced';
+      }
+      
+      // Return original status if no pattern matches
+      return status;
+    };
+    
+    const rawStatuses = safeCars.map(car => car?.status).filter(Boolean);
+    const normalizedStatuses = [...new Set(rawStatuses.map(normalizeStatus))];
+    
     const models = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
     const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
     const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
     const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
 
     const result = {
-      statuses: statuses.sort(),
+      statuses: normalizedStatuses.sort(),
       models: models.sort(),
       branches: branches.sort(),
       colorsExt: colorsExt.sort(),
