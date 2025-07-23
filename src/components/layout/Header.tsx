@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useMemo } from "react";
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 
 export const Header = () => {
   const { stockCars, incomingCars, ksaCars, isLoading } = useGoogleSheets();
@@ -42,15 +43,6 @@ export const Header = () => {
           {/* Car Tracker */}
           <div className="flex items-center gap-6 px-6 py-2 bg-muted/30 rounded-lg border">
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">
-                {isLoading ? '...' : carStats.total}
-              </div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Total Cars
-              </div>
-            </div>
-            <div className="w-px h-8 bg-border"></div>
-            <div className="text-center">
               <div className="text-2xl font-bold text-success">
                 {isLoading ? '...' : carStats.available}
               </div>
@@ -60,7 +52,7 @@ export const Header = () => {
             </div>
             <div className="w-px h-8 bg-border"></div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-destructive">
+              <div className="text-2xl font-bold text-yellow-500">
                 {isLoading ? '...' : carStats.booked}
               </div>
               <div className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -72,11 +64,9 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             <Badge variant="outline" className="text-success border-success/20 bg-success/5">
               <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-              Google Sheets Connected
+              Connected to Google Sheets
             </Badge>
-            <Button variant="outline" size="sm">
-              Settings
-            </Button>
+            <SettingsMenu />
           </div>
         </div>
       </div>
