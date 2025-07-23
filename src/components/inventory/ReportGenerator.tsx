@@ -110,16 +110,17 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       return 0;
     });
 
-    // Create worksheet data
+    // Create worksheet data with numbering
     const headers = [
-      'SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
+      '#', 'SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
       'Color Ext', 'Color Int', 'Branch', 'Customer', 'SP', 'AMPI #', 
       'Received Date', 'Location', 'Aging (Days)'
     ];
 
     const data = [
       headers,
-      ...sortedCars.map(car => [
+      ...sortedCars.map((car, index) => [
+        index + 1, // Sequential numbering
         car.sn,
         car.status,
         car.name || '',
@@ -182,25 +183,33 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       }
     }
 
-    // Set column widths
-    ws['!cols'] = [
-      { width: 8 },   // SN
-      { width: 12 },  // Status
-      { width: 20 },  // Name
-      { width: 15 },  // Model
-      { width: 15 },  // Barcode
-      { width: 20 },  // Chassis No
-      { width: 12 },  // Spec Code
-      { width: 12 },  // Color Ext
-      { width: 12 },  // Color Int
-      { width: 12 },  // Branch
-      { width: 20 },  // Customer
-      { width: 10 },  // SP
-      { width: 12 },  // AMPI #
-      { width: 15 },  // Received Date
-      { width: 15 },  // Location
-      { width: 12 }   // Aging
-    ];
+    // Auto-fit column widths based on content
+    const getColumnWidth = (colIndex: number) => {
+      let maxWidth = 10; // Minimum width
+      
+      // Check header width
+      const headerCell = data[0][colIndex];
+      if (headerCell) {
+        maxWidth = Math.max(maxWidth, String(headerCell).length + 2);
+      }
+      
+      // Check data cell widths
+      for (let row = 1; row < data.length; row++) {
+        const cell = data[row][colIndex];
+        if (cell) {
+          const cellLength = String(cell).length;
+          maxWidth = Math.max(maxWidth, cellLength + 2);
+        }
+      }
+      
+      return Math.min(maxWidth, 50); // Cap at 50 characters
+    };
+
+    // Set auto-fitted column widths
+    ws['!cols'] = headers.map((_, index) => ({ width: getColumnWidth(index) }));
+
+    // Set auto-fit row heights (standard height with some padding)
+    ws['!rows'] = data.map(() => ({ hpt: 20 })); // 20 points height
 
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(wb, ws, `${tabName} Report`);
