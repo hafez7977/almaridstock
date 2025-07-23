@@ -142,6 +142,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                 <TableHead>Branch</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Received Date</TableHead>
+                <TableHead>Location</TableHead>
                 <TableHead>Aging</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -174,6 +175,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                       {car.receivedDate}
                     </div>
                   </TableCell>
+                  <TableCell>{car.place || '-'}</TableCell>
                   <TableCell>
                     <div className={`flex items-center gap-1 text-sm font-medium ${getAgingColor(car.aging)}`}>
                       <Clock className="h-3 w-3" />
