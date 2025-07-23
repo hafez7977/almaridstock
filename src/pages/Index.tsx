@@ -109,8 +109,20 @@ const Index = () => {
 
   // Available cars counts
   const availableCounts = useMemo(() => {
+    // Debug: Log all unique statuses to see what we're working with
+    const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+    const allStatuses = [...new Set(allCars.map(car => car.status))];
+    console.log('All unique statuses in data:', allStatuses);
+    
+    // Debug: Log which cars are being counted as available
+    const stockAvailable = stockCars?.filter(car => {
+      const isAvail = isAvailable(car.status);
+      if (isAvail) console.log(`Stock Available: SN ${car.sn}, Status: "${car.status}"`);
+      return isAvail;
+    }) || [];
+    
     return {
-      stock: stockCars?.filter(car => isAvailable(car.status)).length || 0,
+      stock: stockAvailable.length,
       incoming: incomingCars?.filter(car => isAvailable(car.status)).length || 0,
       ksa: ksaCars?.filter(car => isAvailable(car.status)).length || 0,
     };
