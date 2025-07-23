@@ -66,13 +66,47 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
       );
     }
     
-    // Default variants for other statuses
-    const variants = {
-      'Sold': 'destructive'
-    } as const;
+    // Check for Sold (with misspellings)
+    if (cleanStatus === 'sold' || 
+        cleanStatus === 'sol' || 
+        cleanStatus === 'sould' ||
+        cleanStatus.includes('sold')) {
+      return (
+        <Badge className="bg-dark-blue text-dark-blue-foreground">
+          {status}
+        </Badge>
+      );
+    }
     
+    // Check for Received ADV (with misspellings)
+    if (cleanStatus === 'received adv' || 
+        cleanStatus === 'receved adv' || 
+        cleanStatus === 'received advance' || 
+        cleanStatus === 'recieved adv' ||
+        (cleanStatus.includes('received') && cleanStatus.includes('adv'))) {
+      return (
+        <Badge className="bg-light-yellow text-light-yellow-foreground">
+          {status}
+        </Badge>
+      );
+    }
+    
+    // Check for Invoiced (with misspellings)
+    if (cleanStatus === 'invoiced' || 
+        cleanStatus === 'invoiced' || 
+        cleanStatus === 'invocied' || 
+        cleanStatus === 'invoicd' ||
+        cleanStatus.includes('invoiced')) {
+      return (
+        <Badge className="bg-dark-blue text-dark-blue-foreground">
+          {status}
+        </Badge>
+      );
+    }
+    
+    // Default variants for other statuses
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
+      <Badge variant="outline">
         {status}
       </Badge>
     );

@@ -51,6 +51,12 @@ All colors MUST be HSL.
     --dark-orange: 24 70% 50%;
     --dark-orange-foreground: 0 0% 100%;
 
+    --dark-blue: 220 84% 35%;
+    --dark-blue-foreground: 0 0% 100%;
+
+    --light-yellow: 54 91% 75%;
+    --light-yellow-foreground: 0 0% 20%;
+
     --luxury-gradient: linear-gradient(135deg, hsl(214 84% 56%), hsl(220 70% 65%));
     --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
