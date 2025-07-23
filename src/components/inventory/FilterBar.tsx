@@ -19,7 +19,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
   const [filters, setFilters] = useState<MultiFilters>({
     search: '',
     statuses: [],
-    models: [],
+    models: [], // Will contain car names
+    years: [],  // Will contain model/year data
     branches: [],
     colorsExt: [],
     barcodes: []
@@ -63,14 +64,18 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     const rawStatuses = safeCars.map(car => car?.status).filter(Boolean);
     const normalizedStatuses = [...new Set(rawStatuses.map(normalizeStatus))];
     
-    const models = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
+    // Models filter will now show car names
+    const carNames = [...new Set(safeCars.map(car => car?.name).filter(Boolean))];
+    // Years filter will show model data  
+    const years = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
     const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
     const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
     const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
 
     const result = {
       statuses: normalizedStatuses.sort(),
-      models: models.sort(),
+      models: carNames.sort(), // Now contains car names
+      years: years.sort(),     // Now contains model/year data
       branches: branches.sort(),
       colorsExt: colorsExt.sort(),
       barcodes: barcodes.sort(),
@@ -97,6 +102,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       search: '',
       statuses: [],
       models: [],
+      years: [],
       branches: [],
       colorsExt: [],
       barcodes: []
@@ -108,6 +114,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
   const hasActiveFilters = filters.search !== '' || 
     filters.statuses.length > 0 || 
     filters.models.length > 0 || 
+    filters.years.length > 0 ||
     filters.branches.length > 0 || 
     filters.colorsExt.length > 0 ||
     filters.barcodes.length > 0;
@@ -139,7 +146,15 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               options={uniqueValues.models}
               selected={filters.models}
               onChange={(values) => handleMultiSelectChange('models', values)}
-              placeholder="Model"
+              placeholder="Name"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.years}
+              selected={filters.years}
+              onChange={(values) => handleMultiSelectChange('years', values)}
+              placeholder="Year"
               className="w-40"
             />
 
@@ -182,7 +197,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               [
                 filters.search && `Search: "${filters.search}"`,
                 filters.statuses.length > 0 && `Status: ${filters.statuses.length} selected`,
-                filters.models.length > 0 && `Model: ${filters.models.length} selected`,
+                filters.models.length > 0 && `Name: ${filters.models.length} selected`,
+                filters.years.length > 0 && `Year: ${filters.years.length} selected`,
                 filters.branches.length > 0 && `Branch: ${filters.branches.length} selected`,
                 filters.colorsExt.length > 0 && `Color: ${filters.colorsExt.length} selected`,
                 filters.barcodes.length > 0 && `Barcode: ${filters.barcodes.length} selected`,

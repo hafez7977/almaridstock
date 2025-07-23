@@ -54,6 +54,7 @@ const Index = () => {
     search: '',
     statuses: [],
     models: [],
+    years: [],
     branches: [],
     colorsExt: [],
     barcodes: []

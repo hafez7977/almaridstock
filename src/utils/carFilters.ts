@@ -3,7 +3,8 @@ import { Car } from "@/types/car";
 export interface MultiFilters {
   search: string;
   statuses: string[];
-  models: string[];
+  models: string[]; // This will now be car names
+  years: string[];  // This will be the model/year data
   branches: string[];
   colorsExt: string[];
   barcodes: string[];
@@ -69,13 +70,14 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
       }
     });
     
-    // Other filters
-    const matchesModel = filters.models.length === 0 || filters.models.includes(car.model || '');
+    // Other filters - models now filters by car names, years filters by model data
+    const matchesModel = filters.models.length === 0 || filters.models.includes(car.name || '');
+    const matchesYear = filters.years.length === 0 || filters.years.includes(car.model || '');
     const matchesBranch = filters.branches.length === 0 || filters.branches.includes(car.branch || '');
     const matchesColor = filters.colorsExt.length === 0 || filters.colorsExt.includes(car.colourExt || '');
     const matchesBarcode = filters.barcodes.length === 0 || filters.barcodes.includes(car.barCode || '');
     
-    return matchesSearch && matchesStatus && matchesModel && matchesBranch && matchesColor && matchesBarcode;
+    return matchesSearch && matchesStatus && matchesModel && matchesYear && matchesBranch && matchesColor && matchesBarcode;
   });
 };
 
