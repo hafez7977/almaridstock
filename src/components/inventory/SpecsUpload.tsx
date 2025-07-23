@@ -269,13 +269,14 @@ export const SpecsUpload = () => {
 
       if (dbError) throw dbError;
 
+      // Immediately remove from local state for instant UI update
+      setSpecs(prev => prev.filter(s => s.id !== spec.id));
+
       toast({
         title: "File deleted",
         description: `${spec.file_name} has been deleted successfully.`,
       });
 
-      // Refresh the specs list
-      fetchSpecs();
     } catch (error) {
       console.error('Delete error:', error);
       toast({
