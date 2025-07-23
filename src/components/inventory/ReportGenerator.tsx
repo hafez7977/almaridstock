@@ -139,9 +139,17 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       ])
     ];
 
-    // Create workbook and worksheet
+    // Create workbook and worksheet with proper styling support
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Ensure the workbook supports styling
+    wb.Props = {
+      Title: `${tabName} Available & Booked Cars Report`,
+      Subject: "Car Inventory Report",
+      Author: "Car Inventory System",
+      CreatedDate: new Date()
+    };
 
     // Apply styling
     const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
@@ -149,16 +157,23 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
     // Style header row
     for (let col = range.s.c; col <= range.e.c; col++) {
       const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (!ws[cellRef]) continue;
+      if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
       ws[cellRef].s = {
-        fill: { fgColor: { rgb: 'FFD3D3D3' } }, // Light gray
-        font: { bold: true },
+        fill: { 
+          patternType: "solid",
+          fgColor: { rgb: "D3D3D3" }
+        },
+        font: { 
+          bold: true,
+          color: { rgb: "000000" }
+        },
         border: {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
-        }
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        },
+        alignment: { horizontal: "center", vertical: "center" }
       };
     }
 
@@ -169,15 +184,19 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       
       for (let col = range.s.c; col <= range.e.c; col++) {
         const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-        if (!ws[cellRef]) continue;
+        if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
         ws[cellRef].s = {
-          fill: { fgColor: { rgb: statusColor } },
+          fill: { 
+            patternType: "solid",
+            fgColor: { rgb: statusColor }
+          },
           border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-          }
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+          },
+          alignment: { vertical: "center" }
         };
       }
     }
