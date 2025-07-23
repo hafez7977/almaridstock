@@ -10,6 +10,8 @@ class GoogleSheetsService {
       throw new Error('Not authenticated with Google');
     }
 
+    console.log('Making request to:', url);
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -19,9 +21,18 @@ class GoogleSheetsService {
       },
     });
 
+    console.log('Response status:', response.status, response.statusText);
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Google Sheets API error: ${error.error?.message || response.statusText}`);
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const error = await response.json();
+        errorMessage = `Google Sheets API error: ${error.error?.message || response.statusText}`;
+        console.error('API Error details:', error);
+      } catch (e) {
+        console.error('Failed to parse error response:', e);
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
