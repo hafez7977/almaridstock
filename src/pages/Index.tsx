@@ -35,10 +35,10 @@ const Index = () => {
         car.chassisNo.toLowerCase().includes(filters.search.toLowerCase()) ||
         car.barCode.toLowerCase().includes(filters.search.toLowerCase());
       
-      const matchesStatus = !filters.status || car.status === filters.status;
-      const matchesModel = !filters.model || car.model === filters.model;
-      const matchesBranch = !filters.branch || car.branch === filters.branch;
-      const matchesColor = !filters.colorExt || car.colourExt === filters.colorExt;
+      const matchesStatus = filters.status === 'all' || car.status === filters.status;
+      const matchesModel = filters.model === 'all' || car.model === filters.model;
+      const matchesBranch = filters.branch === 'all' || car.branch === filters.branch;
+      const matchesColor = filters.colorExt === 'all' || car.colourExt === filters.colorExt;
       
       return matchesSearch && matchesStatus && matchesModel && matchesBranch && matchesColor;
     });

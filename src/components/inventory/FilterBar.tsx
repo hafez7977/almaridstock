@@ -18,12 +18,12 @@ interface FilterBarProps {
 export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
   const [filters, setFilters] = useState({
     search: '',
-    status: '',
-    model: '',
-    colorExt: '',
-    colorInt: '',
-    branch: '',
-    supplier: ''
+    status: 'all',
+    model: 'all',
+    colorExt: 'all',
+    colorInt: 'all',
+    branch: 'all',
+    supplier: 'all'
   });
 
   const handleFilterChange = (key: string, value: string) => {
@@ -35,18 +35,22 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
   const clearFilters = () => {
     const clearedFilters = {
       search: '',
-      status: '',
-      model: '',
-      colorExt: '',
-      colorInt: '',
-      branch: '',
-      supplier: ''
+      status: 'all',
+      model: 'all',
+      colorExt: 'all',
+      colorInt: 'all',
+      branch: 'all',
+      supplier: 'all'
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  const hasActiveFilters = filters.search !== '' || 
+    filters.status !== 'all' || 
+    filters.model !== 'all' || 
+    filters.colorExt !== 'all' || 
+    filters.branch !== 'all';
 
   return (
     <Card className="mb-6">
@@ -63,7 +67,7 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
+            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -75,7 +79,7 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectContent>
             </Select>
 
-            <Select value={filters.model || 'all'} onValueChange={(value) => handleFilterChange('model', value === 'all' ? '' : value)}>
+            <Select value={filters.model} onValueChange={(value) => handleFilterChange('model', value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
@@ -88,7 +92,7 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectContent>
             </Select>
 
-            <Select value={filters.branch || 'all'} onValueChange={(value) => handleFilterChange('branch', value === 'all' ? '' : value)}>
+            <Select value={filters.branch} onValueChange={(value) => handleFilterChange('branch', value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Branch" />
               </SelectTrigger>
@@ -101,7 +105,7 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectContent>
             </Select>
 
-            <Select value={filters.colorExt || 'all'} onValueChange={(value) => handleFilterChange('colorExt', value === 'all' ? '' : value)}>
+            <Select value={filters.colorExt} onValueChange={(value) => handleFilterChange('colorExt', value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Color" />
               </SelectTrigger>
