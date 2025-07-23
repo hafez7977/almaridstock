@@ -15,11 +15,23 @@ export interface MultiFilters {
 export const isAvailable = (status: string): boolean => {
   if (!status) return false;
   const cleanStatus = status.toLowerCase().trim();
-  return cleanStatus === 'available' || 
-         cleanStatus === 'availabe' || 
-         cleanStatus === 'availble' || 
-         cleanStatus === 'avaliable' ||
-         cleanStatus.includes('available');
+  
+  // Handle exact matches and common typos
+  const availableVariants = [
+    'available',
+    'availabe', 
+    'availble', 
+    'avaliable',
+    'availabel',
+    'avalable',
+    'avaible',
+    'aviable',
+    'avialable'
+  ];
+  
+  return availableVariants.some(variant => cleanStatus === variant) ||
+         cleanStatus.includes('available') ||
+         cleanStatus.includes('availab');
 };
 
 export const isBooked = (status: string): boolean => {
