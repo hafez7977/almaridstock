@@ -129,7 +129,14 @@ class GoogleSheetsService {
           case 'colourext':
           case 'colour ext':
           case 'exterior color':
+          case 'color ext':
+          case 'color':
+          case 'ext color':
+          case 'external color':
+          case 'exterior colour':
+          case 'ext colour':
             car.colourExt = value;
+            console.log('Found colourExt:', value, 'from header:', header);
             break;
           case 'colourint':
           case 'colour int':
