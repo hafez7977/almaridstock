@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Edit, Calendar, Clock, Download } from "lucide-react";
 import { CarDetailModal } from "./CarDetailModal";
 import { ReportGenerator } from "./ReportGenerator";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CarTableProps {
   cars: Car[];
@@ -23,6 +25,76 @@ interface CarTableProps {
 
 export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const { toast } = useToast();
+
+  const handleSpecCodeClick = async (specCode: string) => {
+    try {
+      // Check if there's a spec file for this spec code
+      const { data: specs, error } = await supabase
+        .from('specs')
+        .select('*')
+        .eq('spec_code', specCode)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking for spec file:', error);
+        toast({
+          title: "Error",
+          description: "Failed to check for spec file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!specs || specs.length === 0) {
+        toast({
+          title: "No spec file available",
+          description: `No spec file available for this code: ${specCode}`,
+          variant: "default",
+        });
+        return;
+      }
+
+      const spec = specs[0];
+
+      // Download the file
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('spec_files')
+        .download(spec.file_path);
+
+      if (downloadError) {
+        console.error('Error downloading file:', downloadError);
+        toast({
+          title: "Download failed",
+          description: "Failed to download the spec file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create download link
+      const url = URL.createObjectURL(fileData);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = spec.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download started",
+        description: `Downloading ${spec.file_name}`,
+      });
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     if (!status) return <Badge variant="outline">-</Badge>;
