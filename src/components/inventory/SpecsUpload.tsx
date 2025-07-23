@@ -76,10 +76,13 @@ export const SpecsUpload = () => {
           continue;
         }
         
+        // Extract spec code from filename (remove .pdf extension)
+        const specCode = file.name.replace(/\.pdf$/i, '');
+        
         newUploads.push({
           id: Math.random().toString(36).substring(7),
           file,
-          specCode: ''
+          specCode
         });
       }
       
@@ -244,7 +247,7 @@ export const SpecsUpload = () => {
               Upload Specs (Admin Only)
             </CardTitle>
             <CardDescription>
-              Upload multiple PDF specification files and link them to spec codes.
+              Upload multiple PDF files. File names should be the spec codes with .pdf extension (e.g., "10535.pdf").
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -275,14 +278,12 @@ export const SpecsUpload = () => {
                         {(upload.file.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Enter spec code"
-                        value={upload.specCode}
-                        onChange={(e) => updateSpecCode(upload.id, e.target.value)}
-                        disabled={uploading}
-                      />
-                    </div>
+                     <div className="flex-1">
+                       <div className="text-sm">
+                         <span className="text-muted-foreground">Spec Code: </span>
+                         <span className="font-medium">{upload.specCode}</span>
+                       </div>
+                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
