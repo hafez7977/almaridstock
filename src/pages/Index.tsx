@@ -118,11 +118,22 @@ const Index = () => {
            cleanStatus.includes('available');
   };
 
+  // Helper function to check if status is "booked" (case-insensitive with minor misspelling tolerance)
+  const isBooked = (status: string) => {
+    if (!status) return false;
+    const cleanStatus = status.toLowerCase().trim();
+    return cleanStatus === 'booked' || 
+           cleanStatus === 'booked' || 
+           cleanStatus === 'bookd' || 
+           cleanStatus === 'booket' ||
+           cleanStatus.includes('booked');
+  };
+
   // Cars that need follow up (Booked status and aging > 3 days)
   const followUpCars = useMemo(() => {
     if (!stockCars || !incomingCars || !ksaCars) return [];
     const allCars = [...stockCars, ...incomingCars, ...ksaCars];
-    return allCars.filter(car => car.status === 'Booked' && car.aging > 3);
+    return allCars.filter(car => isBooked(car.status) && car.aging > 3);
   }, [stockCars, incomingCars, ksaCars]);
 
   // Available cars counts
