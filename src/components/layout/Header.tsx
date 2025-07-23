@@ -9,10 +9,14 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <Car className="h-6 w-6 text-primary" />
+              <img 
+                src="/lovable-uploads/36a66632-d50f-4480-88ae-74894104308c.png" 
+                alt="Al Marid Motors Logo" 
+                className="h-8 w-8 object-contain"
+              />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">Luxury Auto Inventory</h1>
+              <h1 className="text-xl font-semibold text-foreground">Al Marid Motors</h1>
               <p className="text-sm text-muted-foreground">Car Dealership Management System</p>
             </div>
           </div>
