@@ -1,39 +1,66 @@
-import { useState, useMemo } from "react";
-import { Header } from "@/components/layout/Header";
-import { Navigation } from "@/components/layout/Navigation";
-import { CarTable } from "@/components/inventory/CarTable";
-import { FilterBar } from "@/components/inventory/FilterBar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Calendar, Clock, FileText, BarChart3 } from "lucide-react";
-import { Car } from "@/types/car";
-import { mockStockCars, mockIncomingCars, mockKSACars, mockLogs } from "@/data/mockData";
+import React, { useState, useMemo } from 'react';
+import { Header } from '@/components/layout/Header';
+import { Navigation } from '@/components/layout/Navigation';
+import { CarTable } from '@/components/inventory/CarTable';
+import { FilterBar } from '@/components/inventory/FilterBar';
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Car, LogEntry } from '@/types/car';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
+import { useGoogleSheets } from '@/hooks/useGoogleSheets';
+import { Calendar, FileText, AlertTriangle, BarChart3, Loader2 } from 'lucide-react';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('stock');
-  const [filters, setFilters] = useState<any>({});
-  const [cars, setCars] = useState({
-    stock: mockStockCars,
-    incoming: mockIncomingCars,
-    ksa: mockKSACars
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    model: 'all',
+    colorExt: 'all',
+    branch: 'all',
+    supplier: 'all',
   });
 
-  const handleCarUpdate = (updatedCar: Car) => {
-    setCars(prev => ({
-      ...prev,
-      [activeTab]: prev[activeTab as keyof typeof prev].map(car => 
-        car.id === updatedCar.id ? updatedCar : car
-      )
-    }));
+  const { isAuthenticated, spreadsheetId } = useGoogleAuth();
+  const { 
+    stockCars, 
+    incomingCars, 
+    ksaCars, 
+    logs, 
+    isLoading, 
+    error,
+    updateCar 
+  } = useGoogleSheets();
+
+  const handleCarUpdate = async (updatedCar: Car) => {
+    const sheetName = 
+      stockCars.find(car => car.id === updatedCar.id) ? 'Stock' :
+      incomingCars.find(car => car.id === updatedCar.id) ? 'Incoming' :
+      'KSA';
+    
+    // Find the original car to get the old status
+    const originalCar = 
+      stockCars.find(car => car.id === updatedCar.id) ||
+      incomingCars.find(car => car.id === updatedCar.id) ||
+      ksaCars.find(car => car.id === updatedCar.id);
+    
+    await updateCar(updatedCar, sheetName, originalCar?.status);
   };
 
   const filteredCars = useMemo(() => {
-    const currentCars = cars[activeTab as keyof typeof cars] || [];
+    const currentCars = 
+      activeTab === 'stock' ? stockCars || [] :
+      activeTab === 'incoming' ? incomingCars || [] :
+      ksaCars || [];
+
     return currentCars.filter(car => {
       const matchesSearch = !filters.search || 
         car.chassisNo.toLowerCase().includes(filters.search.toLowerCase()) ||
-        car.barCode.toLowerCase().includes(filters.search.toLowerCase());
+        car.barCode.toLowerCase().includes(filters.search.toLowerCase()) ||
+        car.name.toLowerCase().includes(filters.search.toLowerCase());
       
       const matchesStatus = filters.status === 'all' || car.status === filters.status;
       const matchesModel = filters.model === 'all' || car.model === filters.model;
@@ -42,12 +69,14 @@ const Index = () => {
       
       return matchesSearch && matchesStatus && matchesModel && matchesBranch && matchesColor;
     });
-  }, [cars, activeTab, filters]);
+  }, [stockCars, incomingCars, ksaCars, activeTab, filters]);
 
+  // Cars that need follow up (Booked status and aging > 3 days)
   const followUpCars = useMemo(() => {
-    const allCars = [...cars.stock, ...cars.incoming, ...cars.ksa];
+    if (!stockCars || !incomingCars || !ksaCars) return [];
+    const allCars = [...stockCars, ...incomingCars, ...ksaCars];
     return allCars.filter(car => car.status === 'Booked' && car.aging > 3);
-  }, [cars]);
+  }, [stockCars, incomingCars, ksaCars]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -114,28 +143,40 @@ const Index = () => {
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 System Logs
-                <Badge variant="outline">{mockLogs.length} entries</Badge>
+                <Badge variant="outline">{logs?.length || 0} entries</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {mockLogs.map(log => (
-                  <div key={log.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">
-                          SN {log.sn}: {log.oldStatus} → {log.newStatus}
+              <div className="space-y-4">
+                {logs && logs.length > 0 ? (
+                  logs.map((log) => (
+                    <Card key={log.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Car SN: {log.sn}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Status changed from <Badge variant="outline">{log.oldStatus}</Badge> to{' '}
+                              <Badge variant="outline">{log.newStatus}</Badge>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Changed by {log.changedBy}
+                            </p>
+                          </div>
+                          <div className="text-right text-sm text-muted-foreground">
+                            <p>{new Date(log.timestamp).toLocaleDateString()}</p>
+                            <p>{new Date(log.timestamp).toLocaleTimeString()}</p>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Changed by {log.changedBy}
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No logs available</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -151,32 +192,45 @@ const Index = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 border rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{cars.stock.length}</div>
-                  <div className="text-sm text-muted-foreground">Stock Cars</div>
-                </div>
-                <div className="text-center p-6 border rounded-lg">
-                  <div className="text-2xl font-bold text-warning">{cars.incoming.length}</div>
-                  <div className="text-sm text-muted-foreground">Incoming Cars</div>
-                </div>
-                <div className="text-center p-6 border rounded-lg">
-                  <div className="text-2xl font-bold text-success">{cars.ksa.length}</div>
-                  <div className="text-sm text-muted-foreground">KSA Cars</div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium">Total Stock</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stockCars?.length || 0}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium">Incoming Cars</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{incomingCars?.length || 0}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium">KSA Cars</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{ksaCars?.length || 0}</div>
+                  </CardContent>
+                </Card>
               </div>
+              
               <div className="mt-6 p-6 border rounded-lg bg-muted/20">
                 <h3 className="font-semibold mb-4">Quick Export</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Export filtered inventory data to PDF or Excel format
                 </p>
                 <div className="flex gap-2">
-                  <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm">
+                  <Button variant="default" size="sm">
                     Export to PDF
-                  </button>
-                  <button className="px-4 py-2 bg-success text-success-foreground rounded-md text-sm">
+                  </Button>
+                  <Button variant="outline" size="sm">
                     Export to Excel
-                  </button>
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -188,14 +242,66 @@ const Index = () => {
     }
   };
 
+  // Show authentication setup if not authenticated or no spreadsheet ID
+  if (!isAuthenticated || !spreadsheetId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-6">
+          <GoogleAuthButton />
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading car data from Google Sheets...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-6">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-destructive">Error Loading Data</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                {error instanceof Error ? error.message : 'Failed to load data from Google Sheets'}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      <main className="container mx-auto px-4 py-6">
-        {renderContent()}
-      </main>
+      <div className="flex">
+        <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <main className="flex-1 p-6">
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };

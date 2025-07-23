@@ -1,0 +1,255 @@
+import { Car, LogEntry } from '@/types/car';
+import { googleAuthService } from './googleAuth';
+
+class GoogleSheetsService {
+  private readonly baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
+
+  private async makeRequest(url: string, options: RequestInit = {}): Promise<any> {
+    const token = googleAuthService.getAccessToken();
+    if (!token) {
+      throw new Error('Not authenticated with Google');
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Google Sheets API error: ${error.error?.message || response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async readSheet(spreadsheetId: string, range: string): Promise<any[][]> {
+    const url = `${this.baseUrl}/${spreadsheetId}/values/${range}`;
+    const response = await this.makeRequest(url);
+    return response.values || [];
+  }
+
+  async writeSheet(spreadsheetId: string, range: string, values: any[][]): Promise<void> {
+    const url = `${this.baseUrl}/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`;
+    await this.makeRequest(url, {
+      method: 'PUT',
+      body: JSON.stringify({
+        values,
+      }),
+    });
+  }
+
+  async appendSheet(spreadsheetId: string, range: string, values: any[][]): Promise<void> {
+    const url = `${this.baseUrl}/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`;
+    await this.makeRequest(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        values,
+      }),
+    });
+  }
+
+  async createSheet(spreadsheetId: string, title: string): Promise<void> {
+    const url = `${this.baseUrl}/${spreadsheetId}:batchUpdate`;
+    await this.makeRequest(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title,
+              },
+            },
+          },
+        ],
+      }),
+    });
+  }
+
+  // Convert Google Sheets rows to Car objects
+  parseCarData(rows: any[][]): Car[] {
+    if (!rows || rows.length < 2) return [];
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    return dataRows.map((row, index) => {
+      const car: any = { id: `sheet_${index}` };
+      
+      headers.forEach((header, colIndex) => {
+        const value = row[colIndex] || '';
+        
+        switch (header.toLowerCase()) {
+          case 'sn':
+            car.sn = parseInt(value) || 0;
+            break;
+          case 'status':
+            car.status = value || 'Available';
+            break;
+          case 'name':
+            car.name = value;
+            break;
+          case 'barcode':
+          case 'bar code':
+            car.barCode = value;
+            break;
+          case 'model':
+            car.model = value;
+            break;
+          case 'speccode':
+          case 'spec code':
+            car.specCode = value;
+            break;
+          case 'description':
+            car.description = value;
+            break;
+          case 'colourext':
+          case 'colour ext':
+          case 'exterior color':
+            car.colourExt = value;
+            break;
+          case 'colourint':
+          case 'colour int':
+          case 'interior color':
+            car.colourInt = value;
+            break;
+          case 'chassisno':
+          case 'chassis no':
+            car.chassisNo = value;
+            break;
+          case 'engineno':
+          case 'engine no':
+            car.engineNo = value;
+            break;
+          case 'supplier':
+            car.supplier = value;
+            break;
+          case 'branch':
+            car.branch = value;
+            break;
+          case 'place':
+            car.place = value;
+            break;
+          case 'customerdetails':
+          case 'customer details':
+            car.customerDetails = value;
+            break;
+          case 'sp':
+            car.sp = value;
+            break;
+          case 'sd':
+            car.sd = value;
+            break;
+          case 'invno':
+          case 'inv no':
+            car.invNo = value;
+            break;
+          case 'ampi':
+            car.ampi = value;
+            break;
+          case 'paper':
+            car.paper = value;
+            break;
+          case 'deal':
+            car.deal = value;
+            break;
+          case 'receiveddate':
+          case 'received date':
+            car.receivedDate = value;
+            break;
+          case 'aging':
+            car.aging = parseInt(value) || 0;
+            break;
+        }
+      });
+
+      return car as Car;
+    });
+  }
+
+  // Convert Car objects to Google Sheets rows
+  carToRows(cars: Car[]): any[][] {
+    if (!cars.length) return [];
+
+    const headers = [
+      'SN', 'Status', 'Name', 'Bar Code', 'Model', 'Spec Code', 'Description',
+      'Colour Ext', 'Colour Int', 'Chassis No', 'Engine No', 'Supplier',
+      'Branch', 'Place', 'Customer Details', 'SP', 'SD', 'Inv No', 'AMPI',
+      'Paper', 'Deal', 'Received Date', 'Aging'
+    ];
+
+    const rows = cars.map(car => [
+      car.sn, car.status, car.name, car.barCode, car.model, car.specCode,
+      car.description, car.colourExt, car.colourInt, car.chassisNo, car.engineNo,
+      car.supplier, car.branch, car.place, car.customerDetails, car.sp, car.sd,
+      car.invNo, car.ampi, car.paper, car.deal, car.receivedDate, car.aging
+    ]);
+
+    return [headers, ...rows];
+  }
+
+  // Parse log entries from Google Sheets
+  parseLogData(rows: any[][]): LogEntry[] {
+    if (!rows || rows.length < 2) return [];
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    return dataRows.map((row, index) => {
+      const log: any = { id: `log_${index}` };
+      
+      headers.forEach((header, colIndex) => {
+        const value = row[colIndex] || '';
+        
+        switch (header.toLowerCase()) {
+          case 'timestamp':
+            log.timestamp = value;
+            break;
+          case 'sn':
+            log.sn = parseInt(value) || 0;
+            break;
+          case 'oldstatus':
+          case 'old status':
+            log.oldStatus = value;
+            break;
+          case 'newstatus':
+          case 'new status':
+            log.newStatus = value;
+            break;
+          case 'changedby':
+          case 'changed by':
+            log.changedBy = value;
+            break;
+        }
+      });
+
+      return log as LogEntry;
+    });
+  }
+
+  // Convert log entries to Google Sheets rows
+  logToRows(logs: LogEntry[]): any[][] {
+    if (!logs.length) return [];
+
+    const headers = ['Timestamp', 'SN', 'Old Status', 'New Status', 'Changed By'];
+    const rows = logs.map(log => [
+      log.timestamp, log.sn, log.oldStatus, log.newStatus, log.changedBy
+    ]);
+
+    return [headers, ...rows];
+  }
+
+  // Create a new log entry
+  async addLogEntry(spreadsheetId: string, logEntry: LogEntry): Promise<void> {
+    const logRows = this.logToRows([logEntry]);
+    // Skip header row when appending
+    await this.appendSheet(spreadsheetId, 'Logs!A:E', logRows.slice(1));
+  }
+}
+
+export const googleSheetsService = new GoogleSheetsService();
