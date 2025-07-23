@@ -24,7 +24,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     branches: [],
     colorsExt: [],
     barcodes: [],
-    specCodes: []
+    specCodes: [],
+    sp: []
   });
 
   // Extract unique values from cars data with safety checks
@@ -73,6 +74,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
     const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
     const specCodes = [...new Set(safeCars.map(car => car?.specCode).filter(Boolean))];
+    const sp = [...new Set(safeCars.map(car => car?.sp).filter(Boolean))];
 
     const result = {
       statuses: normalizedStatuses.sort(),
@@ -82,6 +84,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       colorsExt: colorsExt.sort(),
       barcodes: barcodes.sort(),
       specCodes: specCodes.sort(),
+      sp: sp.sort(),
     };
     
     console.log('UniqueValues result:', result);
@@ -109,7 +112,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       branches: [],
       colorsExt: [],
       barcodes: [],
-      specCodes: []
+      specCodes: [],
+      sp: []
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
@@ -122,7 +126,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     filters.branches.length > 0 || 
     filters.colorsExt.length > 0 ||
     filters.barcodes.length > 0 ||
-    filters.specCodes.length > 0;
+    filters.specCodes.length > 0 ||
+    filters.sp.length > 0;
 
   return (
     <Card className="mb-6">
@@ -195,6 +200,14 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               className="w-40"
             />
 
+            <MultiSelect
+              options={uniqueValues.sp}
+              selected={filters.sp}
+              onChange={(values) => handleMultiSelectChange('sp', values)}
+              placeholder="SP"
+              className="w-40"
+            />
+
             {hasActiveFilters && (
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 <X className="h-4 w-4 mr-1" />
@@ -216,6 +229,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
                 filters.branches.length > 0 && `Branch: ${filters.branches.length} selected`,
                 filters.colorsExt.length > 0 && `Color: ${filters.colorsExt.length} selected`,
                 filters.barcodes.length > 0 && `Barcode: ${filters.barcodes.length} selected`,
+                filters.sp.length > 0 && `SP: ${filters.sp.length} selected`,
               ].filter(Boolean).join(', ')
             }
           </div>

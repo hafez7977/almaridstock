@@ -9,6 +9,7 @@ export interface MultiFilters {
   colorsExt: string[];
   barcodes: string[];
   specCodes: string[];
+  sp: string[];
 }
 
 // Helper functions to check status types with misspelling tolerance
@@ -105,8 +106,9 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
     const matchesColor = filters.colorsExt.length === 0 || filters.colorsExt.includes(car.colourExt || '');
     const matchesBarcode = filters.barcodes.length === 0 || filters.barcodes.includes(car.barCode || '');
     const matchesSpecCode = filters.specCodes.length === 0 || filters.specCodes.includes(car.specCode || '');
+    const matchesSP = filters.sp.length === 0 || filters.sp.includes(car.sp || '');
     
-    return matchesSearch && matchesStatus && matchesModel && matchesYear && matchesBranch && matchesColor && matchesBarcode && matchesSpecCode;
+    return matchesSearch && matchesStatus && matchesModel && matchesYear && matchesBranch && matchesColor && matchesBarcode && matchesSpecCode && matchesSP;
   });
 };
 

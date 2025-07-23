@@ -59,7 +59,8 @@ const Index = () => {
     branches: [],
     colorsExt: [],
     barcodes: [],
-    specCodes: []
+    specCodes: [],
+    sp: []
   });
 
   const { isAuthenticated, spreadsheetId } = useGoogleAuth();
