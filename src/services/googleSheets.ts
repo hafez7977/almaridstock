@@ -93,6 +93,9 @@ class GoogleSheetsService {
     const headers = rows[0];
     const dataRows = rows.slice(1);
 
+    console.log('Headers from Google Sheets:', headers);
+    console.log('First data row:', dataRows[0]);
+
     return dataRows.map((row, index) => {
       const car: any = { id: `sheet_${index}` };
       
