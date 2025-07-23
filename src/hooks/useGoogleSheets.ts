@@ -18,8 +18,15 @@ export const useGoogleSheets = () => {
   } = useQuery({
     queryKey: ['stock-cars', spreadsheetId],
     queryFn: async () => {
-      const rows = await googleSheetsService.readSheet(spreadsheetId, 'Stock!A:W');
-      return googleSheetsService.parseCarData(rows);
+      console.log('Fetching stock cars from spreadsheet:', spreadsheetId);
+      try {
+        const rows = await googleSheetsService.readSheet(spreadsheetId, 'Stock!A:W');
+        console.log('Stock rows fetched:', rows?.length || 0);
+        return googleSheetsService.parseCarData(rows);
+      } catch (error) {
+        console.error('Error fetching stock cars:', error);
+        throw error;
+      }
     },
     enabled: isAuthenticated && !!spreadsheetId,
     refetchInterval: 30000, // Refetch every 30 seconds
@@ -33,8 +40,15 @@ export const useGoogleSheets = () => {
   } = useQuery({
     queryKey: ['incoming-cars', spreadsheetId],
     queryFn: async () => {
-      const rows = await googleSheetsService.readSheet(spreadsheetId, 'Incoming!A:W');
-      return googleSheetsService.parseCarData(rows);
+      console.log('Fetching incoming cars from spreadsheet:', spreadsheetId);
+      try {
+        const rows = await googleSheetsService.readSheet(spreadsheetId, 'Incoming!A:W');
+        console.log('Incoming rows fetched:', rows?.length || 0);
+        return googleSheetsService.parseCarData(rows);
+      } catch (error) {
+        console.error('Error fetching incoming cars:', error);
+        throw error;
+      }
     },
     enabled: isAuthenticated && !!spreadsheetId,
     refetchInterval: 30000,
@@ -48,8 +62,15 @@ export const useGoogleSheets = () => {
   } = useQuery({
     queryKey: ['ksa-cars', spreadsheetId],
     queryFn: async () => {
-      const rows = await googleSheetsService.readSheet(spreadsheetId, 'KSA!A:W');
-      return googleSheetsService.parseCarData(rows);
+      console.log('Fetching KSA cars from spreadsheet:', spreadsheetId);
+      try {
+        const rows = await googleSheetsService.readSheet(spreadsheetId, 'KSA!A:W');
+        console.log('KSA rows fetched:', rows?.length || 0);
+        return googleSheetsService.parseCarData(rows);
+      } catch (error) {
+        console.error('Error fetching KSA cars:', error);
+        throw error;
+      }
     },
     enabled: isAuthenticated && !!spreadsheetId,
     refetchInterval: 30000,
@@ -168,6 +189,18 @@ export const useGoogleSheets = () => {
 
   const isLoading = isLoadingStock || isLoadingIncoming || isLoadingKSA || isLoadingLogs;
   const error = stockError || incomingError || ksaError || logsError;
+
+  // Log current state for debugging
+  console.log('useGoogleSheets state:', {
+    isAuthenticated,
+    spreadsheetId,
+    isLoading,
+    error: error?.message,
+    stockError: stockError?.message,
+    incomingError: incomingError?.message,
+    ksaError: ksaError?.message,
+    logsError: logsError?.message,
+  });
 
   return {
     stockCars,
