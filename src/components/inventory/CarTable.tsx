@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Edit, Calendar, Clock } from "lucide-react";
+import { Eye, Edit, Calendar, Clock, Download } from "lucide-react";
 import { CarDetailModal } from "./CarDetailModal";
 import { ReportGenerator } from "./ReportGenerator";
 
@@ -128,6 +128,20 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
     return 'text-muted-foreground';
   };
 
+  const getCarPdfs = (carId: string) => {
+    const stored = localStorage.getItem(`car_pdfs_${carId}`);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const downloadPdf = (pdf: any) => {
+    const link = document.createElement('a');
+    link.href = pdf.url;
+    link.download = pdf.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Card className="shadow-sm">
       <CardHeader>
@@ -215,6 +229,23 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
+                      {getCarPdfs(car.id).length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const pdfs = getCarPdfs(car.id);
+                            if (pdfs.length === 1) {
+                              downloadPdf(pdfs[0]);
+                            } else {
+                              setSelectedCar(car);
+                            }
+                          }}
+                          title={`Download PDF${getCarPdfs(car.id).length > 1 ? 's' : ''}`}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
