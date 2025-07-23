@@ -31,7 +31,10 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     error: null,
   });
 
-  const [spreadsheetId, setSpreadsheetIdState] = useState<string>('');
+  const [spreadsheetId, setSpreadsheetIdState] = useState<string>(() => {
+    // Load from localStorage on initialization
+    return localStorage.getItem('google_spreadsheet_id') || '';
+  });
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -122,6 +125,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     // Remove trailing slash to prevent API URL issues
     const cleanId = id.replace(/\/$/, '');
     setSpreadsheetIdState(cleanId);
+    // Persist to localStorage
+    localStorage.setItem('google_spreadsheet_id', cleanId);
   };
 
   const value: GoogleAuthContextType = {

@@ -104,7 +104,11 @@ class GoogleSheetsService {
         
         switch (header.toLowerCase()) {
           case 'sn':
-            car.sn = parseInt(value) || 0;
+          case 'serial number':
+          case 'serial no':
+          case 's/n':
+            // Use row number if SN is empty or invalid, starting from 1
+            car.sn = parseInt(value) || (index + 1);
             break;
           case 'status':
             car.status = value || 'Available';
