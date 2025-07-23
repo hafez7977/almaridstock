@@ -70,25 +70,40 @@ class GoogleAuthService {
       await this.initialize();
     }
 
-    return new Promise((resolve, reject) => {
-      window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: GOOGLE_SCOPES,
-        callback: (tokenResponse: any) => {
-          if (tokenResponse.error) {
-            reject(new Error(tokenResponse.error));
-            return;
-          }
+    console.log('Starting Google sign-in process...');
+    console.log('Current origin:', window.location.origin);
+    console.log('Client ID:', GOOGLE_CLIENT_ID);
 
-          // Store the access token
-          localStorage.setItem('google_access_token', tokenResponse.access_token);
-          
-          // Get user info
-          this.getUserInfo(tokenResponse.access_token)
-            .then(resolve)
-            .catch(reject);
-        },
-      }).requestAccessToken();
+    return new Promise((resolve, reject) => {
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: GOOGLE_SCOPES,
+          callback: (tokenResponse: any) => {
+            console.log('Token response:', tokenResponse);
+            
+            if (tokenResponse.error) {
+              console.error('OAuth error:', tokenResponse.error);
+              reject(new Error(tokenResponse.error));
+              return;
+            }
+
+            // Store the access token
+            localStorage.setItem('google_access_token', tokenResponse.access_token);
+            
+            // Get user info
+            this.getUserInfo(tokenResponse.access_token)
+              .then(resolve)
+              .catch(reject);
+          },
+        });
+        
+        console.log('Requesting access token...');
+        tokenClient.requestAccessToken();
+      } catch (error) {
+        console.error('Error during sign-in:', error);
+        reject(error);
+      }
     });
   }
 
