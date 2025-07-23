@@ -130,7 +130,10 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
 
   const getCarPdfs = (carId: string) => {
     const stored = localStorage.getItem(`car_pdfs_${carId}`);
-    return stored ? JSON.parse(stored) : [];
+    const pdfs = stored ? JSON.parse(stored) : [];
+    // Debug logging
+    console.log(`PDFs for car ${carId}:`, pdfs);
+    return pdfs;
   };
 
   const downloadPdf = (pdf: any) => {
