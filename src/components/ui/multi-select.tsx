@@ -7,13 +7,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
 interface MultiSelectProps {
@@ -32,10 +25,20 @@ export const MultiSelect = ({
   className 
 }: MultiSelectProps) => {
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  console.log('MultiSelect rendered:', { options, selected, placeholder });
 
   // Ensure we have valid arrays
   const safeOptions = Array.isArray(options) ? options : [];
   const safeSelected = Array.isArray(selected) ? selected : [];
+
+  console.log('MultiSelect safe arrays:', { safeOptions, safeSelected });
+
+  // Filter options based on search term
+  const filteredOptions = safeOptions.filter(option =>
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSelect = (option: string) => {
     if (safeSelected.includes(option)) {
@@ -82,28 +85,43 @@ export const MultiSelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0 bg-background border z-50">
-        <Command>
-          <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
-          <CommandEmpty>No options found.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
-            {safeOptions.map((option) => (
-              <CommandItem
-                key={option}
-                value={option}
-                onSelect={() => handleSelect(option)}
-                className="cursor-pointer"
-              >
-                <Check
+        <div className="p-3">
+          {/* Simple search input instead of CommandInput */}
+          <input
+            placeholder={`Search ${placeholder.toLowerCase()}...`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 text-sm border rounded-md bg-background"
+          />
+          
+          {/* Simple scrollable list instead of Command components */}
+          <div className="mt-2 max-h-64 overflow-auto">
+            {filteredOptions.length === 0 ? (
+              <div className="py-2 text-center text-sm text-muted-foreground">
+                No options found
+              </div>
+            ) : (
+              filteredOptions.map((option) => (
+                <div
+                  key={option}
+                  onClick={() => handleSelect(option)}
                   className={cn(
-                    "mr-2 h-4 w-4",
-                    safeSelected.includes(option) ? "opacity-100" : "opacity-0"
+                    "flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm",
+                    safeSelected.includes(option) && "bg-accent text-accent-foreground"
                   )}
-                />
-                {option}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      safeSelected.includes(option) ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );

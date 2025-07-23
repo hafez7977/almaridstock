@@ -13,6 +13,9 @@ interface FilterBarProps {
 }
 
 export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
+  console.log('FilterBar rendered with cars:', cars);
+  console.log('FilterBar cars type:', typeof cars, 'isArray:', Array.isArray(cars));
+  
   const [filters, setFilters] = useState<MultiFilters>({
     search: '',
     statuses: [],
@@ -22,21 +25,30 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     barcodes: []
   });
 
-  // Extract unique values from cars data
+  // Extract unique values from cars data with safety checks
   const uniqueValues = useMemo(() => {
-    const statuses = [...new Set(cars.map(car => car.status).filter(Boolean))];
-    const models = [...new Set(cars.map(car => car.model).filter(Boolean))];
-    const branches = [...new Set(cars.map(car => car.branch).filter(Boolean))];
-    const colorsExt = [...new Set(cars.map(car => car.colourExt).filter(Boolean))];
-    const barcodes = [...new Set(cars.map(car => car.barCode).filter(Boolean))];
+    console.log('Computing uniqueValues with cars:', cars);
+    
+    // Ensure cars is a valid array
+    const safeCars = Array.isArray(cars) ? cars : [];
+    console.log('SafeCars:', safeCars.length, 'items');
+    
+    const statuses = [...new Set(safeCars.map(car => car?.status).filter(Boolean))];
+    const models = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
+    const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
+    const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
+    const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
 
-    return {
+    const result = {
       statuses: statuses.sort(),
       models: models.sort(),
       branches: branches.sort(),
       colorsExt: colorsExt.sort(),
       barcodes: barcodes.sort(),
     };
+    
+    console.log('UniqueValues result:', result);
+    return result;
   }, [cars]);
 
   const handleSearchChange = (value: string) => {
