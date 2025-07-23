@@ -5,6 +5,7 @@ import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useMemo } from "react";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { isAvailable, isBooked } from "@/utils/carFilters";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export const Header = () => {
   const { stockCars, incomingCars, ksaCars, isLoading } = useGoogleSheets();
@@ -61,6 +62,7 @@ export const Header = () => {
               <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
               Connected to Google Sheets
             </Badge>
+            <ThemeToggle />
             <SettingsMenu />
           </div>
         </div>
