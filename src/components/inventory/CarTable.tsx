@@ -134,11 +134,11 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                 <TableHead>SN</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Name/Model</TableHead>
-                <TableHead>Spec. Code</TableHead>
                 <TableHead>Barcode</TableHead>
                 <TableHead>Chassis No</TableHead>
                 <TableHead>Color Ext.</TableHead>
                 <TableHead>Color Int.</TableHead>
+                <TableHead>Spec. Code</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Received Date</TableHead>
@@ -157,7 +157,6 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                       <div className="text-sm text-muted-foreground">{car.model}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{car.specCode || '-'}</TableCell>
                   <TableCell className="font-mono text-sm">{car.barCode || '-'}</TableCell>
                   <TableCell className="font-mono text-sm">{car.chassisNo}</TableCell>
                   <TableCell>
@@ -166,6 +165,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                   <TableCell>
                     {car.colourInt || '-'}
                   </TableCell>
+                  <TableCell className="font-mono text-sm">{car.specCode || '-'}</TableCell>
                   <TableCell>{car.branch}</TableCell>
                   <TableCell className="max-w-32 truncate">{car.customerDetails || '-'}</TableCell>
                   <TableCell>
