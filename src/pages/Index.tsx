@@ -276,7 +276,7 @@ const Index = () => {
                   <CardContent>
                     <div className="text-2xl font-bold">{stockCars?.length || 0}</div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Available: <span className="text-primary font-medium">{availableCounts.stock}</span> | 
+                      Available: <span className="text-light-green font-medium">{availableCounts.stock}</span> | 
                       Booked: <span className="text-yellow font-medium">{bookedCounts.stock}</span>
                     </p>
                   </CardContent>
@@ -288,7 +288,7 @@ const Index = () => {
                   <CardContent>
                     <div className="text-2xl font-bold">{incomingCars?.length || 0}</div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Available: <span className="text-primary font-medium">{availableCounts.incoming}</span> | 
+                      Available: <span className="text-light-green font-medium">{availableCounts.incoming}</span> | 
                       Booked: <span className="text-yellow font-medium">{bookedCounts.incoming}</span>
                     </p>
                   </CardContent>
@@ -300,7 +300,7 @@ const Index = () => {
                   <CardContent>
                     <div className="text-2xl font-bold">{ksaCars?.length || 0}</div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Available: <span className="text-primary font-medium">{availableCounts.ksa}</span> | 
+                      Available: <span className="text-light-green font-medium">{availableCounts.ksa}</span> | 
                       Booked: <span className="text-yellow font-medium">{bookedCounts.ksa}</span>
                     </p>
                   </CardContent>
