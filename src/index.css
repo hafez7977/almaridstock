@@ -39,8 +39,11 @@ All colors MUST be HSL.
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 45 93% 58%;
     --warning-foreground: 0 0% 100%;
+
+    --yellow: 45 93% 58%;
+    --yellow-foreground: 0 0% 100%;
 
     --luxury-gradient: linear-gradient(135deg, hsl(214 84% 56%), hsl(220 70% 65%));
     --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
