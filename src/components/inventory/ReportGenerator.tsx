@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Car } from "@/types/car";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 interface ReportGeneratorProps {
   cars: Car[];
@@ -21,7 +21,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus === 'availble' || 
         cleanStatus === 'avaliable' ||
         cleanStatus.includes('available')) {
-      return '90EE90'; // Light green (without FF prefix for Excel)
+      return 'FF90EE90'; // Light green
     }
     
     // Booked - Yellow
@@ -29,12 +29,12 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus === 'bookd' || 
         cleanStatus === 'booket' ||
         cleanStatus.includes('booked')) {
-      return 'FFFF99'; // Light yellow
+      return 'FFFFFF99'; // Light yellow
     }
     
     // UNRECEIVED - Purple
     if (status === 'UNRECEIVED') {
-      return 'DDA0DD'; // Plum purple
+      return 'FFDDA0DD'; // Plum purple
     }
     
     // Received ADV - Light orange
@@ -43,13 +43,13 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus.includes('received advance') ||
         cleanStatus.includes('recieved adv') ||
         (cleanStatus.includes('received') && cleanStatus.includes('adv'))) {
-      return 'FFE4B5'; // Light orange
+      return 'FFFFE4B5'; // Light orange
     }
     
-    return 'FFFFFF'; // White
+    return 'FFFFFFFF'; // White
   };
 
-  const generateReport = () => {
+  const generateReport = async () => {
     // Filter for available and booked cars only
     const availableAndBookedCars = cars.filter(car => {
       const cleanStatus = car.status.toLowerCase().trim();
@@ -110,16 +110,41 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       return 0;
     });
 
-    // Create worksheet data with numbering (removed SN column)
+    // Create new workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`${tabName} Report`);
+
+    // Define headers (removed SN column)
     const headers = [
       '#', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
       'Color Ext', 'Color Int', 'Branch', 'Customer', 'SP', 'AMPI #', 
       'Received Date', 'Location', 'Aging (Days)'
     ];
 
-    const data = [
-      headers,
-      ...sortedCars.map((car, index) => [
+    // Add header row
+    const headerRow = worksheet.addRow(headers);
+    headerRow.height = 25;
+    
+    // Style header row
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' }
+      };
+      cell.font = { bold: true, color: { argb: 'FF000000' } };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Add data rows with status-based coloring
+    sortedCars.forEach((car, index) => {
+      const rowData = [
         index + 1, // Sequential numbering
         car.status,
         car.name || '',
@@ -136,109 +161,68 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         car.receivedDate || '',
         car.place || '',
         car.aging
-      ])
-    ];
+      ];
 
-    // Create workbook and worksheet with proper styling support
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(data);
-
-    // Ensure the workbook supports styling
-    wb.Props = {
-      Title: `${tabName} Available & Booked Cars Report`,
-      Subject: "Car Inventory Report",
-      Author: "Car Inventory System",
-      CreatedDate: new Date()
-    };
-
-    // Apply styling
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    
-    // Style header row
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
-      ws[cellRef].s = {
-        fill: { 
-          patternType: "solid",
-          fgColor: { rgb: "D3D3D3" }
-        },
-        font: { 
-          bold: true,
-          color: { rgb: "000000" }
-        },
-        border: {
-          top: { style: "thin", color: { rgb: "000000" } },
-          bottom: { style: "thin", color: { rgb: "000000" } },
-          left: { style: "thin", color: { rgb: "000000" } },
-          right: { style: "thin", color: { rgb: "000000" } }
-        },
-        alignment: { horizontal: "center", vertical: "center" }
-      };
-    }
-
-    // Style data rows with status colors
-    for (let row = 1; row <= sortedCars.length; row++) {
-      const car = sortedCars[row - 1];
+      const dataRow = worksheet.addRow(rowData);
+      dataRow.height = 20;
+      
+      // Get status color for this row
       const statusColor = getStatusColor(car.status);
       
-      for (let col = range.s.c; col <= range.e.c; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-        if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
-        ws[cellRef].s = {
-          fill: { 
-            patternType: "solid",
-            fgColor: { rgb: statusColor }
-          },
-          border: {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } }
-          },
-          alignment: { vertical: "center" }
+      // Apply color and border to each cell in the row
+      dataRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: statusColor }
         };
-      }
-    }
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        cell.alignment = { vertical: 'middle' };
+      });
+    });
 
-    // Auto-fit column widths based on content
-    const getColumnWidth = (colIndex: number) => {
-      let maxWidth = 10; // Minimum width
+    // Auto-fit column widths
+    worksheet.columns.forEach((column, index) => {
+      let maxLength = headers[index].length;
       
-      // Check header width
-      const headerCell = data[0][colIndex];
-      if (headerCell) {
-        maxWidth = Math.max(maxWidth, String(headerCell).length + 2);
-      }
-      
-      // Check data cell widths
-      for (let row = 1; row < data.length; row++) {
-        const cell = data[row][colIndex];
-        if (cell) {
-          const cellLength = String(cell).length;
-          maxWidth = Math.max(maxWidth, cellLength + 2);
+      // Check each row for the longest content in this column
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Skip header row
+          const cell = row.getCell(index + 1);
+          const cellValue = cell.value ? cell.value.toString() : '';
+          maxLength = Math.max(maxLength, cellValue.length);
         }
-      }
+      });
       
-      return Math.min(maxWidth, 50); // Cap at 50 characters
-    };
+      // Set column width with some padding
+      column.width = Math.min(Math.max(maxLength + 2, 10), 50);
+    });
 
-    // Set auto-fitted column widths
-    ws['!cols'] = headers.map((_, index) => ({ width: getColumnWidth(index) }));
-
-    // Set auto-fit row heights (standard height with some padding)
-    ws['!rows'] = data.map(() => ({ hpt: 20 })); // 20 points height
-
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, `${tabName} Report`);
-
-    // Generate Excel file and download
-    const fileName = `${tabName}_Available_Booked_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    // Generate buffer and download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${tabName}_Available_Booked_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     toast({
       title: "Report Generated",
-      description: `Exported ${sortedCars.length} available and booked cars from ${tabName} tab.`
+      description: `Exported ${sortedCars.length} available and booked cars from ${tabName} tab with colored rows.`
     });
   };
 
