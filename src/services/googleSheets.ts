@@ -28,13 +28,15 @@ class GoogleSheetsService {
   }
 
   async readSheet(spreadsheetId: string, range: string): Promise<any[][]> {
-    const url = `${this.baseUrl}/${spreadsheetId}/values/${range}`;
+    const cleanSpreadsheetId = spreadsheetId.replace(/\/$/, ''); // Remove trailing slash
+    const url = `${this.baseUrl}/${cleanSpreadsheetId}/values/${range}`;
     const response = await this.makeRequest(url);
     return response.values || [];
   }
 
   async writeSheet(spreadsheetId: string, range: string, values: any[][]): Promise<void> {
-    const url = `${this.baseUrl}/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`;
+    const cleanSpreadsheetId = spreadsheetId.replace(/\/$/, ''); // Remove trailing slash
+    const url = `${this.baseUrl}/${cleanSpreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`;
     await this.makeRequest(url, {
       method: 'PUT',
       body: JSON.stringify({
@@ -44,7 +46,8 @@ class GoogleSheetsService {
   }
 
   async appendSheet(spreadsheetId: string, range: string, values: any[][]): Promise<void> {
-    const url = `${this.baseUrl}/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`;
+    const cleanSpreadsheetId = spreadsheetId.replace(/\/$/, ''); // Remove trailing slash
+    const url = `${this.baseUrl}/${cleanSpreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`;
     await this.makeRequest(url, {
       method: 'POST',
       body: JSON.stringify({
@@ -54,7 +57,8 @@ class GoogleSheetsService {
   }
 
   async createSheet(spreadsheetId: string, title: string): Promise<void> {
-    const url = `${this.baseUrl}/${spreadsheetId}:batchUpdate`;
+    const cleanSpreadsheetId = spreadsheetId.replace(/\/$/, ''); // Remove trailing slash
+    const url = `${this.baseUrl}/${cleanSpreadsheetId}:batchUpdate`;
     await this.makeRequest(url, {
       method: 'POST',
       body: JSON.stringify({
@@ -246,9 +250,10 @@ class GoogleSheetsService {
 
   // Create a new log entry
   async addLogEntry(spreadsheetId: string, logEntry: LogEntry): Promise<void> {
+    const cleanSpreadsheetId = spreadsheetId.replace(/\/$/, ''); // Remove trailing slash
     const logRows = this.logToRows([logEntry]);
     // Skip header row when appending
-    await this.appendSheet(spreadsheetId, 'Logs!A:E', logRows.slice(1));
+    await this.appendSheet(cleanSpreadsheetId, 'Logs!A:E', logRows.slice(1));
   }
 }
 
