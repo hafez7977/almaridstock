@@ -62,6 +62,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                 <TableHead>Barcode</TableHead>
                 <TableHead>Chassis No</TableHead>
                 <TableHead>Color Ext.</TableHead>
+                <TableHead>Color Int.</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Received Date</TableHead>
@@ -84,6 +85,9 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                   <TableCell className="font-mono text-sm">{car.chassisNo}</TableCell>
                   <TableCell>
                     {car.colourExt || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {car.colourInt || '-'}
                   </TableCell>
                   <TableCell>{car.branch}</TableCell>
                   <TableCell className="max-w-32 truncate">{car.customerDetails || '-'}</TableCell>
