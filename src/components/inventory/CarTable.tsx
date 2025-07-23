@@ -53,6 +53,15 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
       );
     }
     
+    // Check for UNRECEIVED
+    if (status === 'UNRECEIVED') {
+      return (
+        <Badge className="bg-purple-600 text-white">
+          {status}
+        </Badge>
+      );
+    }
+    
     // Check for Received Full (with misspellings)
     if (cleanStatus === 'received full' || 
         cleanStatus === 'receved full' || 

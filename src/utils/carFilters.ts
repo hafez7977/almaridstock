@@ -33,7 +33,7 @@ export const isBooked = (status: string): boolean => {
 
 export const getStatusPriority = (status: string): number => {
   if (isAvailable(status)) return 1;
-  if (isBooked(status) || status?.toLowerCase() === 'unreceived') return 2;
+  if (isBooked(status) || status?.toLowerCase() === 'unreceived' || status === 'UNRECEIVED') return 2;
   return 3; // Everything else
 };
 
@@ -51,7 +51,7 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
         case 'Available':
           return isAvailable(car.status);
         case 'Booked':
-          return isBooked(car.status) || car.status?.toLowerCase() === 'unreceived';
+          return isBooked(car.status) || car.status?.toLowerCase() === 'unreceived' || car.status === 'UNRECEIVED';
         case 'Sold':
           return car.status?.toLowerCase().includes('sold') || 
                  car.status?.toLowerCase() === 'sol' || 

@@ -1,7 +1,7 @@
 export interface Car {
   id: string;
   sn: number;
-  status: 'Available' | 'Booked' | 'Sold';
+  status: 'Available' | 'Booked' | 'Sold' | 'UNRECEIVED';
   name: string;
   barCode: string;
   model: string;
