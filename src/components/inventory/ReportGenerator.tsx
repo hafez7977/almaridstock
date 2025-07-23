@@ -21,7 +21,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus === 'availble' || 
         cleanStatus === 'avaliable' ||
         cleanStatus.includes('available')) {
-      return 'FF90EE90'; // Light green
+      return '90EE90'; // Light green (without FF prefix for Excel)
     }
     
     // Booked - Yellow
@@ -29,24 +29,24 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         cleanStatus === 'bookd' || 
         cleanStatus === 'booket' ||
         cleanStatus.includes('booked')) {
-      return 'FFFFFF00'; // Yellow
+      return 'FFFF99'; // Light yellow
     }
     
     // UNRECEIVED - Purple
     if (status === 'UNRECEIVED') {
-      return 'FFE6E6FA'; // Light purple
+      return 'DDA0DD'; // Plum purple
     }
     
-    // Received ADV - Light yellow
+    // Received ADV - Light orange
     if (cleanStatus.includes('received adv') ||
         cleanStatus.includes('receved adv') ||
         cleanStatus.includes('received advance') ||
         cleanStatus.includes('recieved adv') ||
         (cleanStatus.includes('received') && cleanStatus.includes('adv'))) {
-      return 'FFFFFFE0'; // Light yellow
+      return 'FFE4B5'; // Light orange
     }
     
-    return 'FFFFFFFF'; // White
+    return 'FFFFFF'; // White
   };
 
   const generateReport = () => {
@@ -110,9 +110,9 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       return 0;
     });
 
-    // Create worksheet data with numbering
+    // Create worksheet data with numbering (removed SN column)
     const headers = [
-      '#', 'SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
+      '#', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
       'Color Ext', 'Color Int', 'Branch', 'Customer', 'SP', 'AMPI #', 
       'Received Date', 'Location', 'Aging (Days)'
     ];
@@ -121,7 +121,6 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       headers,
       ...sortedCars.map((car, index) => [
         index + 1, // Sequential numbering
-        car.sn,
         car.status,
         car.name || '',
         car.model || '',
