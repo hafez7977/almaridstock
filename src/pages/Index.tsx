@@ -298,8 +298,10 @@ const Index = () => {
       <Header />
       <div className="flex">
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 p-6">
-          {renderContent()}
+        <main className="flex-1 overflow-hidden">
+          <div className="container mx-auto px-4 py-6 max-w-7xl">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>
