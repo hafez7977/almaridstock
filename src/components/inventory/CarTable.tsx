@@ -286,21 +286,20 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                   <TableCell className="font-mono text-sm">{car.barCode || '-'}</TableCell>
                   <TableCell className="font-mono text-sm">{car.chassisNo}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto font-mono text-sm text-primary hover:underline"
-                      onClick={() => handleSpecCodeClick(car.specCode)}
-                    >
-                      {car.specCode}
-                    </Button>
-                  </TableCell>
-                  <TableCell>
                     {car.colourExt || '-'}
                   </TableCell>
                   <TableCell>
                     {car.colourInt || '-'}
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{car.specCode || '-'}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-mono text-sm text-primary hover:underline"
+                      onClick={() => handleSpecCodeClick(car.specCode)}
+                    >
+                      {car.specCode || '-'}
+                    </Button>
+                  </TableCell>
                   <TableCell>{car.branch}</TableCell>
                   <TableCell className="max-w-32 truncate">{car.customerDetails || '-'}</TableCell>
                   <TableCell>{car.sp || '-'}</TableCell>
