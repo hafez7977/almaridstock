@@ -123,20 +123,8 @@ export const SpecsUpload = () => {
     setUploading(true);
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get user profile for uploader name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('user_id', user.id)
-        .single();
-
-      const uploaderName = profile?.full_name || profile?.email || 'Unknown';
+      // For now, use a simple admin identifier since we're using AdminContext
+      const uploaderName = 'Admin User';
 
       let successCount = 0;
       let errorCount = 0;
@@ -157,16 +145,16 @@ export const SpecsUpload = () => {
             throw uploadError;
           }
 
-          // Save metadata to specs table
-          const { error: dbError } = await supabase
-            .from('specs')
-            .insert({
-              spec_code: upload.specCode.trim(),
-              file_name: upload.file.name,
-              file_path: filePath,
-              uploader_name: uploaderName,
-              uploader_id: user.id,
-            });
+           // Save metadata to specs table
+           const { error: dbError } = await supabase
+             .from('specs')
+             .insert({
+               spec_code: upload.specCode.trim(),
+               file_name: upload.file.name,
+               file_path: filePath,
+               uploader_name: uploaderName,
+               uploader_id: '00000000-0000-0000-0000-000000000000', // Admin placeholder
+             });
 
           if (dbError) {
             // If database insert fails, clean up the uploaded file
