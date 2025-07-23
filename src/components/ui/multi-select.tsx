@@ -25,23 +25,28 @@ interface MultiSelectProps {
 }
 
 export const MultiSelect = ({ 
-  options, 
-  selected, 
+  options = [], 
+  selected = [], 
   onChange, 
   placeholder,
   className 
 }: MultiSelectProps) => {
   const [open, setOpen] = useState(false);
 
+  // Ensure we have valid arrays
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeSelected = Array.isArray(selected) ? selected : [];
+
   const handleSelect = (option: string) => {
-    if (selected.includes(option)) {
-      onChange(selected.filter(item => item !== option));
+    if (safeSelected.includes(option)) {
+      onChange(safeSelected.filter(item => item !== option));
     } else {
-      onChange([...selected, option]);
+      onChange([...safeSelected, option]);
     }
   };
 
-  const handleClear = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onChange([]);
   };
 
@@ -55,45 +60,43 @@ export const MultiSelect = ({
           className={cn("justify-between", className)}
         >
           <div className="flex items-center gap-1 flex-wrap">
-            {selected.length === 0 ? (
+            {safeSelected.length === 0 ? (
               <span className="text-muted-foreground">{placeholder}</span>
-            ) : selected.length === 1 ? (
-              <span>{selected[0]}</span>
+            ) : safeSelected.length === 1 ? (
+              <span>{safeSelected[0]}</span>
             ) : (
               <Badge variant="secondary" className="text-xs">
-                {selected.length} selected
+                {safeSelected.length} selected
               </Badge>
             )}
           </div>
           <div className="flex items-center gap-1">
-            {selected.length > 0 && (
+            {safeSelected.length > 0 && (
               <X 
                 className="h-3 w-3 opacity-50 hover:opacity-100" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClear();
-                }}
+                onClick={handleClear}
               />
             )}
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0">
+      <PopoverContent className="w-64 p-0 bg-background border z-50">
         <Command>
           <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>No options found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
-            {options.map((option) => (
+            {safeOptions.map((option) => (
               <CommandItem
                 key={option}
                 value={option}
                 onSelect={() => handleSelect(option)}
+                className="cursor-pointer"
               >
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    selected.includes(option) ? "opacity-100" : "opacity-0"
+                    safeSelected.includes(option) ? "opacity-100" : "opacity-0"
                   )}
                 />
                 {option}
