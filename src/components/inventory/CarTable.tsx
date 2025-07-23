@@ -24,9 +24,50 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
 
   const getStatusBadge = (status: string) => {
+    if (!status) return <Badge variant="outline">-</Badge>;
+    
+    const cleanStatus = status.toLowerCase().trim();
+    
+    // Check for Available (with misspellings)
+    if (cleanStatus === 'available' || 
+        cleanStatus === 'availabe' || 
+        cleanStatus === 'availble' || 
+        cleanStatus === 'avaliable' ||
+        cleanStatus.includes('available')) {
+      return (
+        <Badge className="bg-light-green text-light-green-foreground">
+          {status}
+        </Badge>
+      );
+    }
+    
+    // Check for Booked (with misspellings)
+    if (cleanStatus === 'booked' || 
+        cleanStatus === 'bookd' || 
+        cleanStatus === 'booket' ||
+        cleanStatus.includes('booked')) {
+      return (
+        <Badge className="bg-yellow text-yellow-foreground">
+          {status}
+        </Badge>
+      );
+    }
+    
+    // Check for Received Full (with misspellings)
+    if (cleanStatus === 'received full' || 
+        cleanStatus === 'receved full' || 
+        cleanStatus === 'received ful' || 
+        cleanStatus === 'recieved full' ||
+        cleanStatus.includes('received') && cleanStatus.includes('full')) {
+      return (
+        <Badge className="bg-dark-orange text-dark-orange-foreground">
+          {status}
+        </Badge>
+      );
+    }
+    
+    // Default variants for other statuses
     const variants = {
-      'Available': 'default',
-      'Booked': 'secondary',
       'Sold': 'destructive'
     } as const;
     
