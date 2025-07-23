@@ -120,6 +120,7 @@ class GoogleSheetsService {
         
         switch (headerLower) {
           case 'sn':
+          case 'sn.':
           case 'serial number':
           case 'serial no':
           case 's/n':
@@ -148,8 +149,10 @@ class GoogleSheetsService {
             break;
           case 'colourext':
           case 'colour ext':
+          case 'colour ext.':
           case 'exterior color':
           case 'color ext':
+          case 'color ext.':
           case 'color':
           case 'ext color':
           case 'external color':
@@ -165,8 +168,10 @@ class GoogleSheetsService {
             break;
           case 'colourint':
           case 'colour int':
+          case 'colour int.':
           case 'interior color':
           case 'color int':
+          case 'color int.':
           case 'int color':
           case 'internal color':
           case 'interior colour':

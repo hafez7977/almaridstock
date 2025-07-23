@@ -3,12 +3,46 @@ import { Header } from '@/components/layout/Header';
 import { Navigation } from '@/components/layout/Navigation';
 import { CarTable } from '@/components/inventory/CarTable';
 import { FilterBar } from '@/components/inventory/FilterBar';
+import { Car } from '@/types/car';
+const generateCSV = (cars: Car[]) => {
+  const headers = ['SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Color Ext', 'Color Int', 'Branch', 'Customer', 'Received Date', 'Aging'];
+  const csvRows = [
+    headers.join(','),
+    ...cars.map(car => [
+      car.sn,
+      car.status,
+      `"${car.name || ''}"`,
+      `"${car.model || ''}"`,
+      car.barCode || '',
+      car.chassisNo || '',
+      `"${car.colourExt || ''}"`,
+      `"${car.colourInt || ''}"`,
+      `"${car.branch || ''}"`,
+      `"${car.customerDetails || ''}"`,
+      car.receivedDate || '',
+      car.aging || 0
+    ].join(','))
+  ];
+  return csvRows.join('\n');
+};
+
+const downloadFile = (content: string, filename: string, mimeType: string) => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Car, LogEntry } from '@/types/car';
+import { LogEntry } from '@/types/car';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { Calendar, FileText, AlertTriangle, BarChart3, Loader2 } from 'lucide-react';
@@ -227,11 +261,27 @@ const Index = () => {
                   Export filtered inventory data to PDF or Excel format
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="default" size="sm">
-                    Export to PDF
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={() => {
+                      const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                      const csvContent = generateCSV(allCars);
+                      downloadFile(csvContent, 'inventory-report.csv', 'text/csv');
+                    }}
+                  >
+                    Export to CSV
                   </Button>
-                  <Button variant="outline" size="sm">
-                    Export to Excel
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                      const jsonContent = JSON.stringify(allCars, null, 2);
+                      downloadFile(jsonContent, 'inventory-report.json', 'application/json');
+                    }}
+                  >
+                    Export to JSON
                   </Button>
                 </div>
               </div>
