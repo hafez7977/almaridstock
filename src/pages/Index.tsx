@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Navigation } from '@/components/layout/Navigation';
 import { CarTable } from '@/components/inventory/CarTable';
 import { FilterBar } from '@/components/inventory/FilterBar';
+import { SpecsUpload } from '@/components/inventory/SpecsUpload';
 import { Car } from '@/types/car';
 const generateCSV = (cars: Car[]) => {
   const headers = ['SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Color Ext', 'Color Int', 'Branch', 'Customer', 'Received Date', 'Aging'];
@@ -406,6 +407,9 @@ const Index = () => {
             </CardContent>
           </Card>
         );
+      
+      case 'specs-upload':
+        return <SpecsUpload />;
       
       default:
         return null;
