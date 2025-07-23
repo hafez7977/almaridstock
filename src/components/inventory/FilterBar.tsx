@@ -63,24 +63,24 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+            <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="Available">Available</SelectItem>
                 <SelectItem value="Booked">Booked</SelectItem>
                 <SelectItem value="Sold">Sold</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={filters.model} onValueChange={(value) => handleFilterChange('model', value)}>
+            <Select value={filters.model || 'all'} onValueChange={(value) => handleFilterChange('model', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Models</SelectItem>
+                <SelectItem value="all">All Models</SelectItem>
                 <SelectItem value="BMW X5">BMW X5</SelectItem>
                 <SelectItem value="Mercedes GLE">Mercedes GLE</SelectItem>
                 <SelectItem value="Audi Q8">Audi Q8</SelectItem>
@@ -88,12 +88,12 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectContent>
             </Select>
 
-            <Select value={filters.branch} onValueChange={(value) => handleFilterChange('branch', value)}>
+            <Select value={filters.branch || 'all'} onValueChange={(value) => handleFilterChange('branch', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Branch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Branches</SelectItem>
+                <SelectItem value="all">All Branches</SelectItem>
                 <SelectItem value="Dubai">Dubai</SelectItem>
                 <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
                 <SelectItem value="Sharjah">Sharjah</SelectItem>
@@ -101,12 +101,12 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectContent>
             </Select>
 
-            <Select value={filters.colorExt} onValueChange={(value) => handleFilterChange('colorExt', value)}>
+            <Select value={filters.colorExt || 'all'} onValueChange={(value) => handleFilterChange('colorExt', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Color" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Colors</SelectItem>
+                <SelectItem value="all">All Colors</SelectItem>
                 <SelectItem value="Black">Black</SelectItem>
                 <SelectItem value="White">White</SelectItem>
                 <SelectItem value="Silver">Silver</SelectItem>
