@@ -117,10 +117,18 @@ class GoogleSheetsService {
 
       // This should be a data row
       if (row.length >= 5 && row[0] && row[0] !== '') {
+        // Check if location contains "incoming" (case insensitive with misspelling tolerance)
+        const location = (row[13] || '').toLowerCase().trim();
+        const isIncomingLocation = location.includes('incoming') || 
+                                 location.includes('incomming') || 
+                                 location.includes('incomig') || 
+                                 location.includes('incomming') ||
+                                 location === 'incoming';
+        
         const car: any = {
           id: `ksa_${carCounter}`,
           sn: carCounter++,
-          status: row[0] || 'Available',
+          status: isIncomingLocation ? 'unreceived' : (row[0] || 'Available'),
           name: row[1] || '',
           barCode: row[2] || '',
           model: row[3] || '',
