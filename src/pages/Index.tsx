@@ -46,17 +46,17 @@ import { LogEntry } from '@/types/car';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { Calendar, FileText, AlertTriangle, BarChart3, Loader2 } from 'lucide-react';
+import { MultiFilters, filterCars, sortCarsWithPriority, getAvailableCars, getBookedCars, isAvailable, isBooked } from '@/utils/carFilters';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('stock');
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<MultiFilters>({
     search: '',
-    status: 'all',
-    model: 'all',
-    colorExt: 'all',
-    branch: 'all',
-    supplier: 'all',
-    barcode: 'all',
+    statuses: [],
+    models: [],
+    branches: [],
+    colorsExt: [],
+    barcodes: []
   });
 
   const { isAuthenticated, spreadsheetId } = useGoogleAuth();
@@ -91,43 +91,12 @@ const Index = () => {
       activeTab === 'incoming' ? incomingCars || [] :
       ksaCars || [];
 
-    return currentCars.filter(car => {
-      const matchesSearch = !filters.search || 
-        car.chassisNo?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        car.barCode?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        car.name?.toLowerCase().includes(filters.search.toLowerCase());
-      
-      const matchesStatus = filters.status === 'all' || car.status === filters.status;
-      const matchesModel = filters.model === 'all' || car.model === filters.model;
-      const matchesBranch = filters.branch === 'all' || car.branch === filters.branch;
-      const matchesColor = filters.colorExt === 'all' || car.colourExt === filters.colorExt;
-      const matchesBarcode = filters.barcode === 'all' || car.barCode === filters.barcode;
-      
-      return matchesSearch && matchesStatus && matchesModel && matchesBranch && matchesColor && matchesBarcode;
-    });
+    // Apply filters using the utility function
+    const filtered = filterCars(currentCars, filters);
+    
+    // Sort with Available and Booked first
+    return sortCarsWithPriority(filtered);
   }, [stockCars, incomingCars, ksaCars, activeTab, filters]);
-
-  // Helper function to check if status is "available" (case-insensitive with minor misspelling tolerance)
-  const isAvailable = (status: string) => {
-    if (!status) return false;
-    const cleanStatus = status.toLowerCase().trim();
-    return cleanStatus === 'available' || 
-           cleanStatus === 'availabe' || 
-           cleanStatus === 'availble' || 
-           cleanStatus === 'avaliable' ||
-           cleanStatus.includes('available');
-  };
-
-  // Helper function to check if status is "booked" (case-insensitive with minor misspelling tolerance)
-  const isBooked = (status: string) => {
-    if (!status) return false;
-    const cleanStatus = status.toLowerCase().trim();
-    return cleanStatus === 'booked' || 
-           cleanStatus === 'booked' || 
-           cleanStatus === 'bookd' || 
-           cleanStatus === 'booket' ||
-           cleanStatus.includes('booked');
-  };
 
   // Cars that need follow up (Booked status and aging > 3 days)
   const followUpCars = useMemo(() => {
@@ -161,7 +130,14 @@ const Index = () => {
       case 'ksa':
         return (
           <div>
-            <FilterBar cars={filteredCars} onFilterChange={setFilters} />
+            <FilterBar 
+              cars={
+                activeTab === 'stock' ? stockCars || [] :
+                activeTab === 'incoming' ? incomingCars || [] :
+                ksaCars || []
+              } 
+              onFilterChange={setFilters} 
+            />
             <CarTable 
               cars={filteredCars}
               title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Inventory`}
@@ -307,34 +283,95 @@ const Index = () => {
                 </Card>
               </div>
               
-              <div className="mt-6 p-6 border rounded-lg bg-muted/20">
-                <h3 className="font-semibold mb-4">Quick Export</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Export filtered inventory data to PDF or Excel format
-                </p>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    onClick={() => {
-                      const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
-                      const csvContent = generateCSV(allCars);
-                      downloadFile(csvContent, 'inventory-report.csv', 'text/csv');
-                    }}
-                  >
-                    Export to CSV
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
-                      const jsonContent = JSON.stringify(allCars, null, 2);
-                      downloadFile(jsonContent, 'inventory-report.json', 'application/json');
-                    }}
-                  >
-                    Export to JSON
-                  </Button>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <div className="p-6 border rounded-lg bg-muted/20">
+                  <h3 className="font-semibold mb-4">All Cars Export</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Export complete inventory data to CSV or JSON format
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => {
+                        const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                        const csvContent = generateCSV(allCars);
+                        downloadFile(csvContent, 'inventory-all-cars.csv', 'text/csv');
+                      }}
+                    >
+                      Export All to CSV
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                        const jsonContent = JSON.stringify(allCars, null, 2);
+                        downloadFile(jsonContent, 'inventory-all-cars.json', 'application/json');
+                      }}
+                    >
+                      Export All to JSON
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="p-6 border rounded-lg bg-muted/20">
+                  <h3 className="font-semibold mb-4">Status-Based Reports</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Export cars by specific status (Available, Booked, etc.)
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="bg-light-green hover:bg-light-green/90"
+                      onClick={() => {
+                        const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                        const availableCars = getAvailableCars(allCars);
+                        const csvContent = generateCSV(availableCars);
+                        downloadFile(csvContent, 'inventory-available-cars.csv', 'text/csv');
+                      }}
+                    >
+                      Available Cars CSV
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="bg-yellow hover:bg-yellow/90"
+                      onClick={() => {
+                        const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                        const bookedCars = getBookedCars(allCars);
+                        const csvContent = generateCSV(bookedCars);
+                        downloadFile(csvContent, 'inventory-booked-cars.csv', 'text/csv');
+                      }}
+                    >
+                      Booked Cars CSV
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                        const availableCars = getAvailableCars(allCars);
+                        const jsonContent = JSON.stringify(availableCars, null, 2);
+                        downloadFile(jsonContent, 'inventory-available-cars.json', 'application/json');
+                      }}
+                    >
+                      Available JSON
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
+                        const bookedCars = getBookedCars(allCars);
+                        const jsonContent = JSON.stringify(bookedCars, null, 2);
+                        downloadFile(jsonContent, 'inventory-booked-cars.json', 'application/json');
+                      }}
+                    >
+                      Booked JSON
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
