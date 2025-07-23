@@ -4,20 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useMemo } from "react";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
+import { isAvailable, isBooked } from "@/utils/carFilters";
 
 export const Header = () => {
   const { stockCars, incomingCars, ksaCars, isLoading } = useGoogleSheets();
   
   const carStats = useMemo(() => {
     const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
-    const available = allCars.filter(car => 
-      car.status?.toLowerCase() === 'available' || 
-      car.status?.toLowerCase() === 'stock'
-    ).length;
-    const booked = allCars.filter(car => 
-      car.status?.toLowerCase() === 'booked' || 
-      car.status?.toLowerCase() === 'sold'
-    ).length;
+    const available = allCars.filter(car => isAvailable(car.status)).length;
+    const booked = allCars.filter(car => isBooked(car.status)).length;
     const total = allCars.length;
     
     return { available, booked, total };
