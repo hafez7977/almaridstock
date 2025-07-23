@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      specs: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          spec_code: string
+          updated_at: string
+          upload_date: string
+          uploader_id: string
+          uploader_name: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          spec_code: string
+          updated_at?: string
+          upload_date?: string
+          uploader_id: string
+          uploader_name: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          spec_code?: string
+          updated_at?: string
+          upload_date?: string
+          uploader_id?: string
+          uploader_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

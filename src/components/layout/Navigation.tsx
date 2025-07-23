@@ -20,6 +20,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'stock', label: 'Stock', icon: Package },
     { id: 'incoming', label: 'Incoming', icon: TruckIcon },
     { id: 'ksa', label: 'KSA', icon: Building },
+    { id: 'specs-upload', label: 'Specs Upload', icon: FileText },
     { id: 'alerts', label: 'Follow-Up', icon: AlertTriangle },
     { id: 'logs', label: 'Logs', icon: FileText },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
