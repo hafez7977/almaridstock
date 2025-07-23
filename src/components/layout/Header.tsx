@@ -58,10 +58,6 @@ export const Header = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Badge variant="outline" className="text-success border-success/20 bg-success/5">
-              <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-              Active Tracker
-            </Badge>
             <ThemeToggle />
             <SettingsMenu />
           </div>
