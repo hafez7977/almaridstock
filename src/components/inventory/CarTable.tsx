@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Edit, Calendar, Clock } from "lucide-react";
 import { CarDetailModal } from "./CarDetailModal";
+import { ReportGenerator } from "./ReportGenerator";
 
 interface CarTableProps {
   cars: Car[];
@@ -130,10 +131,13 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {title}
-          <Badge variant="outline">{cars.length} cars</Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle>{title}</CardTitle>
+            <Badge variant="outline">{cars.length} cars</Badge>
+          </div>
+          <ReportGenerator cars={cars} tabName={title} />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -150,6 +154,8 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                 <TableHead>Spec. Code</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead>Customer</TableHead>
+                <TableHead>SP</TableHead>
+                <TableHead>AMPI #</TableHead>
                 <TableHead>Received Date</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Aging</TableHead>
@@ -178,6 +184,8 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                   <TableCell className="font-mono text-sm">{car.specCode || '-'}</TableCell>
                   <TableCell>{car.branch}</TableCell>
                   <TableCell className="max-w-32 truncate">{car.customerDetails || '-'}</TableCell>
+                  <TableCell>{car.sp || '-'}</TableCell>
+                  <TableCell>{car.ampi || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm">
                       <Calendar className="h-3 w-3" />
