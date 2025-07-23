@@ -131,8 +131,13 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
   const getCarPdfs = (carId: string) => {
     const stored = localStorage.getItem(`car_pdfs_${carId}`);
     const pdfs = stored ? JSON.parse(stored) : [];
-    // Debug logging
-    console.log(`PDFs for car ${carId}:`, pdfs);
+    // Debug logging specifically for SN 1356
+    if (carId.includes('1356')) {
+      console.log(`DEBUG: Car ID for SN 1356: ${carId}`);
+      console.log(`DEBUG: localStorage key: car_pdfs_${carId}`);
+      console.log(`DEBUG: Raw stored data: ${stored}`);
+      console.log(`DEBUG: Parsed PDFs: `, pdfs);
+    }
     return pdfs;
   };
 
@@ -180,7 +185,23 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {cars.map((car) => (
+              {cars.map((car) => {
+                // Debug logging for SN 1356 specifically
+                if (car.sn === 1356) {
+                  console.log(`DEBUG: Found car SN 1356 - Car object:`, car);
+                  console.log(`DEBUG: Car ID: ${car.id}`);
+                  
+                  // Check all localStorage keys that contain "pdf"
+                  console.log(`DEBUG: All localStorage keys containing 'pdf':`);
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.includes('pdf')) {
+                      console.log(`  ${key}: ${localStorage.getItem(key)}`);
+                    }
+                  }
+                }
+                
+                return (
                 <TableRow key={car.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">{car.sn}</TableCell>
                   <TableCell>{getStatusBadge(car.status)}</TableCell>
@@ -252,7 +273,8 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
