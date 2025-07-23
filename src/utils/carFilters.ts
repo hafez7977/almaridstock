@@ -108,11 +108,11 @@ export const sortCarsWithPriority = (cars: Car[]): Car[] => {
       return aName.localeCompare(bName);
     }
     
-    // Within same name, sort by model (year)
+    // Within same name, sort by model (year) - higher first
     const aModel = a.model?.toLowerCase() || '';
     const bModel = b.model?.toLowerCase() || '';
     if (aModel !== bModel) {
-      return aModel.localeCompare(bModel);
+      return bModel.localeCompare(aModel); // Reversed to get higher model first
     }
     
     // If same name and model, sort by SN
