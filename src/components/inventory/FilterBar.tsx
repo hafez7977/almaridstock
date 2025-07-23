@@ -23,7 +23,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     years: [],  // Will contain model/year data
     branches: [],
     colorsExt: [],
-    barcodes: []
+    barcodes: [],
+    specCodes: []
   });
 
   // Extract unique values from cars data with safety checks
@@ -71,6 +72,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
     const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
     const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
+    const specCodes = [...new Set(safeCars.map(car => car?.specCode).filter(Boolean))];
 
     const result = {
       statuses: normalizedStatuses.sort(),
@@ -79,6 +81,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       branches: branches.sort(),
       colorsExt: colorsExt.sort(),
       barcodes: barcodes.sort(),
+      specCodes: specCodes.sort(),
     };
     
     console.log('UniqueValues result:', result);
@@ -105,7 +108,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       years: [],
       branches: [],
       colorsExt: [],
-      barcodes: []
+      barcodes: [],
+      specCodes: []
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
@@ -117,7 +121,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     filters.years.length > 0 ||
     filters.branches.length > 0 || 
     filters.colorsExt.length > 0 ||
-    filters.barcodes.length > 0;
+    filters.barcodes.length > 0 ||
+    filters.specCodes.length > 0;
 
   return (
     <Card className="mb-6">
@@ -155,6 +160,14 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.years}
               onChange={(values) => handleMultiSelectChange('years', values)}
               placeholder="Year"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.specCodes}
+              selected={filters.specCodes}
+              onChange={(values) => handleMultiSelectChange('specCodes', values)}
+              placeholder="Spec. Code"
               className="w-40"
             />
 
@@ -199,6 +212,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
                 filters.statuses.length > 0 && `Status: ${filters.statuses.length} selected`,
                 filters.models.length > 0 && `Name: ${filters.models.length} selected`,
                 filters.years.length > 0 && `Year: ${filters.years.length} selected`,
+                filters.specCodes.length > 0 && `Spec. Code: ${filters.specCodes.length} selected`,
                 filters.branches.length > 0 && `Branch: ${filters.branches.length} selected`,
                 filters.colorsExt.length > 0 && `Color: ${filters.colorsExt.length} selected`,
                 filters.barcodes.length > 0 && `Barcode: ${filters.barcodes.length} selected`,
