@@ -85,7 +85,7 @@ const Index = () => {
       case 'ksa':
         return (
           <div>
-            <FilterBar onFilterChange={setFilters} />
+            <FilterBar cars={filteredCars} onFilterChange={setFilters} />
             <CarTable 
               cars={filteredCars}
               title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Inventory`}

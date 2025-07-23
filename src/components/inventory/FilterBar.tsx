@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { Car } from "@/types/car";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -12,10 +13,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, X } from "lucide-react";
 
 interface FilterBarProps {
+  cars: Car[];
   onFilterChange: (filters: any) => void;
 }
 
-export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
+export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -25,6 +27,23 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
     branch: 'all',
     supplier: 'all'
   });
+
+  // Extract unique values from cars data
+  const uniqueValues = useMemo(() => {
+    const statuses = [...new Set(cars.map(car => car.status).filter(Boolean))];
+    const models = [...new Set(cars.map(car => car.model).filter(Boolean))];
+    const branches = [...new Set(cars.map(car => car.branch).filter(Boolean))];
+    const colorsExt = [...new Set(cars.map(car => car.colourExt).filter(Boolean))];
+    const suppliers = [...new Set(cars.map(car => car.supplier).filter(Boolean))];
+
+    return {
+      statuses: statuses.sort(),
+      models: models.sort(),
+      branches: branches.sort(),
+      colorsExt: colorsExt.sort(),
+      suppliers: suppliers.sort(),
+    };
+  }, [cars]);
 
   const handleFilterChange = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };
@@ -73,9 +92,9 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Available">Available</SelectItem>
-                <SelectItem value="Booked">Booked</SelectItem>
-                <SelectItem value="Sold">Sold</SelectItem>
+                {uniqueValues.statuses.map(status => (
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -85,10 +104,9 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Models</SelectItem>
-                <SelectItem value="BMW X5">BMW X5</SelectItem>
-                <SelectItem value="Mercedes GLE">Mercedes GLE</SelectItem>
-                <SelectItem value="Audi Q8">Audi Q8</SelectItem>
-                <SelectItem value="Porsche Cayenne">Porsche Cayenne</SelectItem>
+                {uniqueValues.models.map(model => (
+                  <SelectItem key={model} value={model}>{model}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -98,10 +116,9 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Branches</SelectItem>
-                <SelectItem value="Dubai">Dubai</SelectItem>
-                <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
-                <SelectItem value="Sharjah">Sharjah</SelectItem>
-                <SelectItem value="Riyadh">Riyadh</SelectItem>
+                {uniqueValues.branches.map(branch => (
+                  <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -111,11 +128,9 @@ export const FilterBar = ({ onFilterChange }: FilterBarProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Colors</SelectItem>
-                <SelectItem value="Black">Black</SelectItem>
-                <SelectItem value="White">White</SelectItem>
-                <SelectItem value="Silver">Silver</SelectItem>
-                <SelectItem value="Blue">Blue</SelectItem>
-                <SelectItem value="Red">Red</SelectItem>
+                {uniqueValues.colorsExt.map(color => (
+                  <SelectItem key={color} value={color}>{color}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
