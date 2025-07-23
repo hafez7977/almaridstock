@@ -19,6 +19,7 @@ declare global {
 class GoogleAuthService {
   private isInitialized = false;
   private gapi: any = null;
+  private tokenClient: any = null;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -56,6 +57,13 @@ class GoogleAuthService {
       client_id: GOOGLE_CLIENT_ID,
       callback: this.handleCredentialResponse.bind(this),
     });
+
+    // Initialize token client for OAuth
+    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_SCOPES,
+      callback: () => {}, // Will be set dynamically
+    });
   }
 
   private handleCredentialResponse(response: any): void {
@@ -76,30 +84,28 @@ class GoogleAuthService {
 
     return new Promise((resolve, reject) => {
       try {
-        const tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: GOOGLE_SCOPES,
-          callback: (tokenResponse: any) => {
-            console.log('Token response:', tokenResponse);
-            
-            if (tokenResponse.error) {
-              console.error('OAuth error:', tokenResponse.error);
-              reject(new Error(tokenResponse.error));
-              return;
-            }
+        this.tokenClient.callback = (tokenResponse: any) => {
+          console.log('Token response:', tokenResponse);
+          
+          if (tokenResponse.error) {
+            console.error('OAuth error:', tokenResponse.error);
+            reject(new Error(tokenResponse.error));
+            return;
+          }
 
-            // Store the access token
-            localStorage.setItem('google_access_token', tokenResponse.access_token);
-            
-            // Get user info
-            this.getUserInfo(tokenResponse.access_token)
-              .then(resolve)
-              .catch(reject);
-          },
-        });
+          // Store the access token and expiration time
+          const expiresAt = Date.now() + (tokenResponse.expires_in * 1000);
+          localStorage.setItem('google_access_token', tokenResponse.access_token);
+          localStorage.setItem('google_token_expires_at', expiresAt.toString());
+          
+          // Get user info
+          this.getUserInfo(tokenResponse.access_token)
+            .then(resolve)
+            .catch(reject);
+        };
         
         console.log('Requesting access token...');
-        tokenClient.requestAccessToken();
+        this.tokenClient.requestAccessToken();
       } catch (error) {
         console.error('Error during sign-in:', error);
         reject(error);
@@ -134,14 +140,86 @@ class GoogleAuthService {
     }
     
     localStorage.removeItem('google_access_token');
+    localStorage.removeItem('google_token_expires_at');
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem('google_access_token');
+    const token = localStorage.getItem('google_access_token');
+    if (!token) return null;
+
+    // Check if token is expired
+    if (this.isTokenExpired()) {
+      return null;
+    }
+
+    return token;
   }
 
   isAuthenticated(): boolean {
     return !!this.getAccessToken();
+  }
+
+  private isTokenExpired(): boolean {
+    const expiresAt = localStorage.getItem('google_token_expires_at');
+    if (!expiresAt) return true;
+
+    const now = Date.now();
+    const expires = parseInt(expiresAt, 10);
+    
+    // Consider token expired 5 minutes before actual expiration
+    return now >= (expires - 5 * 60 * 1000);
+  }
+
+  async refreshToken(): Promise<string | null> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    console.log('Attempting to refresh token...');
+    
+    return new Promise((resolve, reject) => {
+      try {
+        this.tokenClient.callback = (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            console.error('Token refresh error:', tokenResponse.error);
+            // Clear invalid tokens
+            localStorage.removeItem('google_access_token');
+            localStorage.removeItem('google_token_expires_at');
+            reject(new Error(tokenResponse.error));
+            return;
+          }
+
+          // Store the new access token and expiration time
+          const expiresAt = Date.now() + (tokenResponse.expires_in * 1000);
+          localStorage.setItem('google_access_token', tokenResponse.access_token);
+          localStorage.setItem('google_token_expires_at', expiresAt.toString());
+          
+          console.log('Token refreshed successfully');
+          resolve(tokenResponse.access_token);
+        };
+        
+        this.tokenClient.requestAccessToken();
+      } catch (error) {
+        console.error('Error during token refresh:', error);
+        reject(error);
+      }
+    });
+  }
+
+  async getValidAccessToken(): Promise<string | null> {
+    const token = this.getAccessToken();
+    
+    if (token) {
+      return token;
+    }
+
+    // Token is expired or doesn't exist, try to refresh
+    try {
+      return await this.refreshToken();
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      return null;
+    }
   }
 }
 

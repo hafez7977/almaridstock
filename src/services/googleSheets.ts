@@ -4,10 +4,10 @@ import { googleAuthService } from './googleAuth';
 class GoogleSheetsService {
   private readonly baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
 
-  private async makeRequest(url: string, options: RequestInit = {}): Promise<any> {
-    const token = googleAuthService.getAccessToken();
+  private async makeRequest(url: string, options: RequestInit = {}, retryCount = 0): Promise<any> {
+    const token = await googleAuthService.getValidAccessToken();
     if (!token) {
-      throw new Error('Not authenticated with Google');
+      throw new Error('No access token available. Please sign in again.');
     }
 
     console.log('Making request to:', url);
@@ -22,6 +22,20 @@ class GoogleSheetsService {
     });
 
     console.log('Response status:', response.status, response.statusText);
+
+    if (response.status === 401 && retryCount === 0) {
+      console.log('Got 401, attempting token refresh...');
+      try {
+        const newToken = await googleAuthService.refreshToken();
+        if (newToken) {
+          // Retry the request with the new token
+          return this.makeRequest(url, options, retryCount + 1);
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+      }
+      throw new Error('Authentication failed. Please sign in again.');
+    }
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
