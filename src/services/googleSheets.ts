@@ -95,9 +95,12 @@ class GoogleSheetsService {
 
     console.log('Headers from Google Sheets:', headers);
     console.log('First data row:', dataRows[0]);
+    console.log('Sample car data mapping:');
 
     return dataRows.map((row, index) => {
       const car: any = { id: `sheet_${index}` };
+      
+      console.log(`Processing row ${index + 1}:`, row);
       
       headers.forEach((header, colIndex) => {
         const value = row[colIndex] || '';
@@ -139,13 +142,29 @@ class GoogleSheetsService {
           case 'external color':
           case 'exterior colour':
           case 'ext colour':
+          case 'color exterior':
+          case 'colour exterior':
+          case 'clr ext':
+          case 'clr_ext':
+          case 'colorext':
             car.colourExt = value;
             console.log('Found colourExt:', value, 'from header:', header);
             break;
           case 'colourint':
           case 'colour int':
           case 'interior color':
+          case 'color int':
+          case 'int color':
+          case 'internal color':
+          case 'interior colour':
+          case 'int colour':
+          case 'color interior':
+          case 'colour interior':
+          case 'clr int':
+          case 'clr_int':
+          case 'colorint':
             car.colourInt = value;
+            console.log('Found colourInt:', value, 'from header:', header);
             break;
           case 'chassisno':
           case 'chassis no':
