@@ -84,9 +84,9 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-4 h-4 rounded border border-border"
-                        style={{ backgroundColor: car.colourExt.toLowerCase() }}
+                        style={{ backgroundColor: car.colourExt?.toLowerCase() || '#ccc' }}
                       />
-                      {car.colourExt}
+                      {car.colourExt || '-'}
                     </div>
                   </TableCell>
                   <TableCell>{car.branch}</TableCell>
