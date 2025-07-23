@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { Loader2, LogOut, User } from 'lucide-react';
@@ -17,6 +18,10 @@ export const GoogleAuthButton: React.FC = () => {
     spreadsheetId, 
     setSpreadsheetId 
   } = useGoogleAuth();
+
+  const predefinedSheets = [
+    { id: '1Q15AaOfDXixE07fmFUsymkHAcWaa0XhUxq1mOVzrgk4', name: 'Default Inventory Sheet' },
+  ];
 
   if (isLoading) {
     return (
@@ -63,13 +68,42 @@ export const GoogleAuthButton: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="spreadsheet-id">Google Sheets ID</Label>
-          <Input
-            id="spreadsheet-id"
-            placeholder="Enter your Google Sheets ID"
+          <Label htmlFor="spreadsheet-select">Select Google Sheets</Label>
+          <Select
             value={spreadsheetId}
-            onChange={(e) => setSpreadsheetId(e.target.value)}
-          />
+            onValueChange={(value) => {
+              if (value === 'custom') {
+                setSpreadsheetId('');
+              } else {
+                setSpreadsheetId(value);
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a spreadsheet" />
+            </SelectTrigger>
+            <SelectContent>
+              {predefinedSheets.map((sheet) => (
+                <SelectItem key={sheet.id} value={sheet.id}>
+                  {sheet.name}
+                </SelectItem>
+              ))}
+              <SelectItem value="custom">Custom Spreadsheet ID</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {(!spreadsheetId || !predefinedSheets.some(sheet => sheet.id === spreadsheetId)) && (
+            <>
+              <Label htmlFor="spreadsheet-id">Custom Google Sheets ID</Label>
+              <Input
+                id="spreadsheet-id"
+                placeholder="Enter your Google Sheets ID"
+                value={spreadsheetId}
+                onChange={(e) => setSpreadsheetId(e.target.value)}
+              />
+            </>
+          )}
+          
           <p className="text-xs text-muted-foreground">
             You can find this in your Google Sheets URL: 
             https://docs.google.com/spreadsheets/d/[SPREADSHEET_ID]/edit
