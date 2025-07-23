@@ -200,6 +200,9 @@ const Index = () => {
                             <div className="text-sm text-muted-foreground mt-1">
                               Customer: {car.customerDetails} | Branch: {car.branch}
                             </div>
+                            <div className="text-sm text-muted-foreground">
+                              SP: {car.sp || 'N/A'} | AMPI #: {car.ampi || 'N/A'}
+                            </div>
                           </div>
                           <Badge variant="secondary" className="text-warning border-warning/20">
                             {car.aging} days
