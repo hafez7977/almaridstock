@@ -130,19 +130,34 @@ const Index = () => {
       case 'ksa':
         return (
           <div>
-            <FilterBar 
-              cars={
-                activeTab === 'stock' ? stockCars || [] :
-                activeTab === 'incoming' ? incomingCars || [] :
-                ksaCars || []
-              } 
-              onFilterChange={setFilters} 
-            />
-            <CarTable 
-              cars={filteredCars}
-              title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Inventory`}
-              onCarUpdate={handleCarUpdate}
-            />
+            {/* Only show FilterBar when we have data loaded */}
+            {!isLoading && (
+              <FilterBar 
+                cars={
+                  activeTab === 'stock' ? stockCars || [] :
+                  activeTab === 'incoming' ? incomingCars || [] :
+                  ksaCars || []
+                } 
+                onFilterChange={setFilters} 
+              />
+            )}
+            {/* Show loading state while data is loading */}
+            {isLoading ? (
+              <Card>
+                <CardContent className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span>Loading inventory data...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <CarTable 
+                cars={filteredCars}
+                title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Inventory`}
+                onCarUpdate={handleCarUpdate}
+              />
+            )}
           </div>
         );
       
