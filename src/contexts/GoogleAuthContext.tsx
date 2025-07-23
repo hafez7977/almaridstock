@@ -31,7 +31,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     error: null,
   });
 
-  const [spreadsheetId, setSpreadsheetId] = useState<string>('');
+  const [spreadsheetId, setSpreadsheetIdState] = useState<string>('');
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -116,6 +116,12 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         error: error instanceof Error ? error.message : 'Failed to sign out',
       }));
     }
+  };
+
+  const setSpreadsheetId = (id: string) => {
+    // Remove trailing slash to prevent API URL issues
+    const cleanId = id.replace(/\/$/, '');
+    setSpreadsheetIdState(cleanId);
   };
 
   const value: GoogleAuthContextType = {
