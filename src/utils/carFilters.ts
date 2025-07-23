@@ -92,6 +92,15 @@ export const sortCarsWithPriority = (cars: Car[]): Car[] => {
       return aPriority - bPriority;
     }
     
+    // Within Available cars (priority 1), put Toyota at the end
+    if (aPriority === 1) {
+      const aIsToyota = a.name?.toLowerCase().includes('toyota') || false;
+      const bIsToyota = b.name?.toLowerCase().includes('toyota') || false;
+      
+      if (aIsToyota && !bIsToyota) return 1;  // Toyota goes after non-Toyota
+      if (!aIsToyota && bIsToyota) return -1; // Non-Toyota goes before Toyota
+    }
+    
     // If same priority, sort by SN
     return (a.sn || 0) - (b.sn || 0);
   });
