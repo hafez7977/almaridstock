@@ -1,7 +1,7 @@
 import { GoogleUser } from '@/types/google-sheets';
 
 // Google OAuth configuration
-const GOOGLE_CLIENT_ID = '1035920558332-je3msm05eo6nhl2736n69l8ghqsem7mm.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '1035920558332-dv9nk30ftjn4gfhvtdr6i3ld8j96cm0h.apps.googleusercontent.com';
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.readonly',
