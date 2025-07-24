@@ -37,29 +37,65 @@ class GoogleAuthService {
   private loadGoogleScript(): Promise<void> {
     return new Promise((resolve, reject) => {
       console.log('Checking if Google script is loaded in HTML...');
+      console.log('User agent:', navigator.userAgent);
+      console.log('Current origin:', window.location.origin);
       
       // Check if script tag exists
       const scriptTag = document.querySelector('script[src*="gsi/client"]');
       console.log('Google script tag found:', !!scriptTag);
       
+      if (scriptTag) {
+        console.log('Script src:', scriptTag.getAttribute('src'));
+        console.log('Script loaded:', scriptTag.hasAttribute('data-loaded'));
+      }
+      
       // Check current state of window.google
       console.log('window.google exists:', !!window.google);
       console.log('window.google.accounts exists:', !!window.google?.accounts);
+      
+      // Check for script loading errors
+      const scripts = document.querySelectorAll('script[src*="gsi/client"]');
+      scripts.forEach((script, index) => {
+        const htmlScript = script as HTMLScriptElement;
+        console.log(`Script ${index + 1} error state:`, htmlScript.onerror);
+        htmlScript.addEventListener('error', (e) => {
+          console.error('Google script loading error:', e);
+        });
+      });
       
       const checkAPI = (attempts = 0) => {
         console.log(`Attempt ${attempts + 1}: Checking Google API availability...`);
         console.log('window.google:', !!window.google);
         console.log('window.google.accounts:', !!window.google?.accounts);
         
-        if (window.google?.accounts) {
-          console.log('Google API initialized successfully');
+        // More detailed logging
+        if (window.google) {
+          console.log('Google object keys:', Object.keys(window.google));
+          if (window.google.accounts) {
+            console.log('Google accounts object keys:', Object.keys(window.google.accounts));
+          }
+        }
+        
+        if (window.google?.accounts?.oauth2) {
+          console.log('Google OAuth2 API available');
           resolve();
           return;
         }
 
-        if (attempts >= 30) { // 3 seconds timeout
-          const errorMsg = `Google API failed to initialize after ${attempts + 1} attempts. Script tag present: ${!!scriptTag}`;
-          console.error(errorMsg);
+        if (attempts >= 50) { // 5 seconds timeout for mobile
+          const debugInfo = {
+            scriptTagExists: !!scriptTag,
+            windowGoogleExists: !!window.google,
+            accountsExists: !!window.google?.accounts,
+            oauth2Exists: !!window.google?.accounts?.oauth2,
+            userAgent: navigator.userAgent,
+            origin: window.location.origin,
+            protocol: window.location.protocol
+          };
+          
+          console.error('Google API failed to initialize. Debug info:', debugInfo);
+          
+          const errorMsg = `Google API failed to initialize after ${attempts + 1} attempts. Debug: ${JSON.stringify(debugInfo)}`;
           reject(new Error(errorMsg));
           return;
         }
