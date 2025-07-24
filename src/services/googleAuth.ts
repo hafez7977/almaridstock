@@ -45,6 +45,7 @@ class GoogleAuthService {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            include_granted_scopes: 'true'
           }
         }
       });
