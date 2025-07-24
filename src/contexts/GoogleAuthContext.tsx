@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { GoogleAuthState, GoogleUser } from '@/types/google-sheets';
 import { googleAuthService } from '@/services/googleAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GoogleAuthContextType extends GoogleAuthState {
   signIn: () => Promise<void>;
@@ -54,6 +55,48 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         // Initialize the auth service
         await googleAuthService.initialize();
         console.log('Auth service initialized successfully');
+        
+        // Check for OAuth callback first (for mobile apps)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+        const hasOAuthParams = urlParams.has('code') || hashParams.has('access_token') || hashParams.has('refresh_token');
+        
+        if (hasOAuthParams) {
+          console.log('OAuth callback detected, processing...');
+          // Let Supabase handle the OAuth callback
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('OAuth callback session error:', error);
+            throw error;
+          }
+          
+          if (session?.user) {
+            console.log('OAuth callback successful, setting authenticated state');
+            const user = {
+              email: session.user.email || '',
+              name: session.user.user_metadata?.full_name || session.user.email || '',
+              picture: session.user.user_metadata?.avatar_url || '',
+            };
+            
+            // Store the access token and user info
+            if (session.provider_token) {
+              localStorage.setItem('google_access_token', session.provider_token);
+              localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
+            }
+            localStorage.setItem('google_user', JSON.stringify(user));
+            
+            setAuthState({
+              isAuthenticated: true,
+              isLoading: false,
+              user,
+              error: null,
+            });
+            
+            setIsInitialized(true);
+            return;
+          }
+        }
         
         // Check if we have a valid token and session
         const validToken = await googleAuthService.getValidAccessToken();
