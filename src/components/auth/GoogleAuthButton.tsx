@@ -9,15 +9,15 @@ import { Loader2, LogOut, User } from 'lucide-react';
 
 export const GoogleAuthButton: React.FC = () => {
   const { 
-    isAuthenticated, 
-    isLoading, 
     user, 
-    error, 
+    isLoading, 
     signIn, 
     signOut, 
     spreadsheetId, 
     setSpreadsheetId 
   } = useGoogleAuth();
+
+  const isAuthenticated = !!user;
 
   const predefinedSheets = [
     { id: '1Q15AaOfDXixE07fmFUsymkHAcWaa0XhUxq1mOVzrgk4', name: 'Default Inventory Sheet' },
@@ -47,9 +47,6 @@ export const GoogleAuthButton: React.FC = () => {
           <Button onClick={signIn} className="w-full">
             Sign in with Google
           </Button>
-          {error && (
-            <p className="text-sm text-destructive mt-2">{error}</p>
-          )}
         </CardContent>
       </Card>
     );
@@ -60,7 +57,7 @@ export const GoogleAuthButton: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
-          Welcome, {user?.name}
+          Welcome, {user?.user_metadata?.full_name || user?.email}
         </CardTitle>
         <CardDescription>
           Connected to Google Sheets
@@ -113,12 +110,12 @@ export const GoogleAuthButton: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img 
-              src={user?.picture} 
-              alt={user?.name} 
+              src={user?.user_metadata?.avatar_url} 
+              alt={user?.user_metadata?.full_name || user?.email} 
               className="h-8 w-8 rounded-full"
             />
             <div>
-              <p className="text-sm font-medium">{user?.name}</p>
+              <p className="text-sm font-medium">{user?.user_metadata?.full_name || user?.email}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>

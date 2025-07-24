@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { GoogleAuthState, GoogleUser } from '@/types/google-sheets';
-import { googleAuthService } from '@/services/googleAuth';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface GoogleAuthContextType extends GoogleAuthState {
+interface GoogleAuthContextType {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   setSpreadsheetId: (id: string) => void;
@@ -25,216 +28,97 @@ interface GoogleAuthProviderProps {
 }
 
 export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) => {
-  const [authState, setAuthState] = useState<GoogleAuthState>({
-    isAuthenticated: false,
-    isLoading: true,
-    user: null,
-    error: null,
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [spreadsheetId, setSpreadsheetIdState] = useState<string>(() => {
-    // Load from localStorage on initialization
     return localStorage.getItem('google_spreadsheet_id') || '';
   });
 
-  const [isInitialized, setIsInitialized] = useState(false);
-
   useEffect(() => {
-    const initializeAuth = async () => {
-      // Prevent multiple initialization attempts
-      if (isInitialized) {
-        console.log('Auth already initialized, skipping...');
-        return;
+    console.log('Setting up auth state listener...');
+    
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change:', event, !!session);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+        
+        // Store Google access token if available
+        if (session?.provider_token) {
+          localStorage.setItem('google_access_token', session.provider_token);
+          console.log('Stored Google provider token');
+        }
       }
+    );
 
-      console.log('Starting auth context initialization...');
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', !!session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
       
-      try {
-        setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-        
-        // Initialize the auth service
-        await googleAuthService.initialize();
-        console.log('Auth service initialized successfully');
-        
-        // Check for OAuth callback first (for mobile apps)
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
-        const hasOAuthParams = urlParams.has('code') || hashParams.has('access_token') || hashParams.has('refresh_token');
-        
-        if (hasOAuthParams) {
-          console.log('OAuth callback detected, processing...');
-          // Let Supabase handle the OAuth callback
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('OAuth callback session error:', error);
-            throw error;
-          }
-          
-          if (session?.user) {
-            console.log('OAuth callback successful, setting authenticated state');
-            const user = {
-              email: session.user.email || '',
-              name: session.user.user_metadata?.full_name || session.user.email || '',
-              picture: session.user.user_metadata?.avatar_url || '',
-            };
-            
-            // Store the access token and user info
-            if (session.provider_token) {
-              localStorage.setItem('google_access_token', session.provider_token);
-              localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
-            }
-            localStorage.setItem('google_user', JSON.stringify(user));
-            
-            setAuthState({
-              isAuthenticated: true,
-              isLoading: false,
-              user,
-              error: null,
-            });
-            
-            setIsInitialized(true);
-            return;
-          }
-        }
-        
-        // Check if we have a valid token and session
-        const validToken = await googleAuthService.getValidAccessToken();
-        console.log('Valid token available:', !!validToken);
-        
-        if (validToken) {
-          // We have a valid token, check for saved user info
-          const savedUser = localStorage.getItem('google_user');
-          console.log('Saved user available:', !!savedUser);
-          
-          if (savedUser) {
-            try {
-              const user = JSON.parse(savedUser);
-              console.log('Setting authenticated state with user:', user.email);
-              setAuthState({
-                isAuthenticated: true,
-                isLoading: false,
-                user,
-                error: null,
-              });
-            } catch (parseError) {
-              console.error('Failed to parse saved user data:', parseError);
-              // Clear corrupted data
-              localStorage.removeItem('google_user');
-              await googleAuthService.signOut();
-              setAuthState({
-                isAuthenticated: false,
-                isLoading: false,
-                user: null,
-                error: null,
-              });
-            }
-          } else {
-            // Token exists but no user info, this shouldn't happen in normal flow
-            console.log('Token exists but no user info - clearing auth state');
-            await googleAuthService.signOut();
-            setAuthState({
-              isAuthenticated: false,
-              isLoading: false,
-              user: null,
-              error: null,
-            });
-          }
-        } else {
-          // No valid token, set clean unauthenticated state
-          console.log('No valid token found - setting clean unauthenticated state');
-          setAuthState({
-            isAuthenticated: false,
-            isLoading: false,
-            user: null,
-            error: null,
-          });
-        }
-        
-        setIsInitialized(true);
-        console.log('Auth context initialization completed successfully');
-        
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        console.error('Error type:', typeof error);
-        console.error('Error constructor:', error?.constructor?.name);
-        
-        // Detailed error logging
-        if (error instanceof Error) {
-          console.error('Error message:', error.message);
-          console.error('Error stack:', error.stack);
-        } else {
-          console.error('Non-Error object:', error);
-        }
-        
-        // Clear everything on initialization error
-        try {
-          await googleAuthService.signOut();
-          localStorage.removeItem('google_user');
-        } catch (cleanupError) {
-          console.error('Error during cleanup:', cleanupError);
-        }
-        
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : `Auth initialization failed: ${String(error)}`;
-        
-        setAuthState({
-          isAuthenticated: false,
-          isLoading: false,
-          user: null,
-          error: errorMessage,
-        });
-        
-        setIsInitialized(true); // Mark as initialized even on error to prevent retry loops
+      if (session?.provider_token) {
+        localStorage.setItem('google_access_token', session.provider_token);
+        console.log('Stored Google provider token from initial session');
       }
-    };
+    });
 
-    initializeAuth();
-  }, [isInitialized]);
+    return () => subscription.unsubscribe();
+  }, []);
 
   const signIn = async () => {
-    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+    setIsLoading(true);
     
     try {
-      const user = await googleAuthService.signIn();
-      localStorage.setItem('google_user', JSON.stringify(user));
-      
-      setAuthState({
-        isAuthenticated: true,
-        isLoading: false,
-        user,
-        error: null,
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
       });
+
+      if (error) {
+        console.error('Google OAuth error:', error);
+        setIsLoading(false);
+        throw error;
+      }
+
+      console.log('OAuth sign-in initiated successfully');
     } catch (error) {
-      setAuthState({
-        isAuthenticated: false,
-        isLoading: false,
-        user: null,
-        error: error instanceof Error ? error.message : 'Failed to sign in',
-      });
+      console.error('Sign-in error:', error);
+      setIsLoading(false);
+      throw error;
     }
   };
 
   const signOut = async () => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
+    setIsLoading(true);
     
     try {
-      await googleAuthService.signOut();
-      localStorage.removeItem('google_user');
+      localStorage.removeItem('google_access_token');
+      localStorage.removeItem('google_spreadsheet_id');
       
-      setAuthState({
-        isAuthenticated: false,
-        isLoading: false,
-        user: null,
-        error: null,
-      });
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
+      
+      console.log('Signed out successfully');
     } catch (error) {
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to sign out',
-      }));
+      console.error('Sign-out error:', error);
+      setIsLoading(false);
+      throw error;
     }
   };
 
@@ -247,7 +131,10 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   };
 
   const value: GoogleAuthContextType = {
-    ...authState,
+    user,
+    session,
+    isLoading,
+    isAuthenticated: !!user,
     signIn,
     signOut,
     setSpreadsheetId,
