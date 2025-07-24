@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Car, LogEntry } from '@/types/car';
 import { googleSheetsService } from '@/services/googleSheets';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export const useGoogleSheets = () => {
-  const { isAuthenticated, spreadsheetId } = useAuthContext();
+  const { isAuthenticated, spreadsheetId } = useGoogleAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

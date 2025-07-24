@@ -44,7 +44,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LogEntry } from '@/types/car';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { Calendar, FileText, AlertTriangle, BarChart3, Loader2 } from 'lucide-react';
 import { MultiFilters, filterCars, sortCarsWithPriority, getAvailableCars, getBookedCars, isAvailable, isBooked } from '@/utils/carFilters';
@@ -63,7 +63,7 @@ const Index = () => {
     sp: []
   });
 
-  const { isAuthenticated, spreadsheetId } = useAuthContext();
+  const { isAuthenticated, spreadsheetId } = useGoogleAuth();
   const { 
     stockCars, 
     incomingCars, 
