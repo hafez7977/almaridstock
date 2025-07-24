@@ -22,44 +22,55 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick }: MobileCar
   };
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-3 bg-white border border-gray-200 shadow-sm">
       <CardContent className="p-4">
+        {/* Header with name and status */}
         <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg truncate">{car.name}</h3>
-            <p className="text-sm text-muted-foreground">SN: {car.sn}</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-base text-gray-900 truncate">{car.name}</h3>
+            <p className="text-sm text-gray-500">SN: {car.sn}</p>
           </div>
-          <Badge className={cn("ml-2 shrink-0", getStatusColor(car.status))}>
+          <Badge className={cn("ml-2 shrink-0 text-xs px-2 py-1", getStatusColor(car.status))}>
             {car.status}
           </Badge>
         </div>
 
+        {/* Key information grid */}
         <div className="grid grid-cols-2 gap-3 text-sm mb-4">
           <div>
-            <span className="text-muted-foreground">Model:</span>
-            <p className="font-medium truncate">{car.model || 'N/A'}</p>
+            <span className="text-gray-500 block">Model</span>
+            <p className="font-medium text-gray-900 truncate">{car.model || 'N/A'}</p>
           </div>
           <div>
-            <span className="text-muted-foreground">Spec:</span>
-            <p className="font-medium truncate">{car.specCode || 'N/A'}</p>
+            <span className="text-gray-500 block">Color</span>
+            <p className="font-medium text-gray-900 truncate">{car.colourExt || 'N/A'}</p>
           </div>
           <div>
-            <span className="text-muted-foreground">Color:</span>
-            <p className="font-medium truncate">{car.colourExt || 'N/A'}</p>
+            <span className="text-gray-500 block">Branch</span>
+            <p className="font-medium text-gray-900 truncate">{car.branch || 'N/A'}</p>
           </div>
           <div>
-            <span className="text-muted-foreground">Branch:</span>
-            <p className="font-medium truncate">{car.branch || 'N/A'}</p>
+            <span className="text-gray-500 block">Chassis</span>
+            <p className="font-medium text-gray-900 truncate font-mono text-xs">{car.chassisNo || 'N/A'}</p>
           </div>
         </div>
 
+        {/* Customer info if available */}
+        {car.customerDetails && (
+          <div className="mb-3 p-2 bg-gray-50 rounded-md">
+            <span className="text-gray-500 text-xs block">Customer</span>
+            <p className="font-medium text-gray-900 text-sm truncate">{car.customerDetails}</p>
+          </div>
+        )}
+
+        {/* Spec code with download */}
         {car.specCode && (
           <div className="mb-3">
-            <span className="text-muted-foreground text-sm">Spec Code:</span>
+            <span className="text-gray-500 text-xs block mb-1">Spec Code</span>
             <Button
-              variant="link"
+              variant="outline"
               size="sm"
-              className="h-auto p-0 ml-2 text-primary"
+              className="h-8 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
               onClick={() => onSpecCodeClick?.(car.specCode)}
             >
               {car.specCode}
@@ -68,21 +79,23 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick }: MobileCar
           </div>
         )}
 
+        {/* Aging indicator */}
         {car.aging !== undefined && car.aging > 0 && (
-          <div className="flex items-center gap-2 mb-3">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 mb-3 text-sm">
+            <Clock className="h-4 w-4 text-gray-400" />
+            <span className="text-gray-600">
               {car.aging} days old
             </span>
           </div>
         )}
 
-        <div className="flex gap-2">
+        {/* Actions */}
+        <div className="pt-2 border-t border-gray-100">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onViewDetails(car)}
-            className="flex-1"
+            className="w-full h-9 text-sm bg-white border-gray-300 hover:bg-gray-50 text-gray-700"
           >
             <Eye className="h-4 w-4 mr-2" />
             View Details

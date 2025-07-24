@@ -60,9 +60,9 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   return (
     <>
       {/* Desktop Navigation */}
-      <aside className="hidden lg:block w-64 bg-card border-r border-border h-screen sticky top-0">
+      <aside className="hidden lg:block w-64 bg-white border-r border-gray-200 h-screen sticky top-0">
         <div className="p-4">
-          <h2 className="text-lg font-semibold mb-4">Navigation</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-900">Navigation</h2>
           <NavigationContent />
         </div>
       </aside>
@@ -74,14 +74,14 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
             <Button
               variant="outline"
               size="sm"
-              className="fixed top-4 left-4 z-50 bg-card shadow-lg"
+              className="fixed top-4 left-4 z-50 bg-white border-gray-300 shadow-lg hover:bg-gray-50"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-4 w-4 text-gray-700" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
+          <SheetContent side="left" className="w-64 p-0 bg-white">
             <div className="p-4">
-              <SheetTitle className="text-lg font-semibold mb-4">Navigation</SheetTitle>
+              <SheetTitle className="text-lg font-semibold mb-4 text-gray-900">Navigation</SheetTitle>
               <NavigationContent />
             </div>
           </SheetContent>

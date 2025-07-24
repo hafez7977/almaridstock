@@ -472,18 +472,23 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Header />
       <div className="flex">
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 lg:ml-0 p-4 lg:p-6 max-w-full overflow-x-hidden">
-          <div className="lg:hidden mb-4">
-            {/* Mobile tab indicator */}
-            <div className="text-sm text-muted-foreground mb-2">Current Section:</div>
-            <div className="text-lg font-semibold capitalize">{activeTab.replace('-', ' ')}</div>
+        <main className="flex-1 lg:ml-0 bg-white">
+          {/* Mobile header with current section */}
+          <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 mt-16">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">Current Section</div>
+            <div className="text-lg font-semibold text-gray-900 capitalize">
+              {activeTab.replace('-', ' ')}
+            </div>
           </div>
           
-          {renderContent()}
+          {/* Content area */}
+          <div className="p-4 lg:p-6 bg-white">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>
