@@ -27,28 +27,28 @@ export const Header = () => {
               <img 
                 src="/lovable-uploads/36a66632-d50f-4480-88ae-74894104308c.png" 
                 alt="Al Marid Motors Logo" 
-                className="h-8 w-8 object-contain"
+                className="h-6 w-6 sm:h-8 sm:w-8 object-contain"
               />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">Al Marid Motors</h1>
-              <p className="text-sm text-muted-foreground">Stock System</p>
+              <h1 className="text-lg sm:text-xl font-semibold text-foreground">Al Marid Motors</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Stock System</p>
             </div>
           </div>
           
-          {/* Car Tracker */}
-          <div className="flex items-center gap-6 px-6 py-2 bg-muted/30 rounded-lg border">
+          {/* Car Tracker - Mobile Optimized */}
+          <div className="flex items-center gap-2 sm:gap-6 px-2 sm:px-6 py-2 bg-muted/30 rounded-lg border">
             <div className="text-center">
-              <div className="text-2xl font-bold text-success">
+              <div className="text-lg sm:text-2xl font-bold text-success">
                 {isLoading ? '...' : carStats.available}
               </div>
               <div className="text-xs text-muted-foreground uppercase tracking-wide">
                 Available
               </div>
             </div>
-            <div className="w-px h-8 bg-border"></div>
+            <div className="w-px h-6 sm:h-8 bg-border"></div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-500">
+              <div className="text-lg sm:text-2xl font-bold text-yellow-500">
                 {isLoading ? '...' : carStats.booked}
               </div>
               <div className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -57,7 +57,7 @@ export const Header = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <ThemeToggle />
             <SettingsMenu />
           </div>

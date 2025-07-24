@@ -278,7 +278,7 @@ const Index = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium">Stock Cars</CardTitle>
@@ -476,10 +476,14 @@ const Index = () => {
       <Header />
       <div className="flex">
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 overflow-hidden">
-          <div className="container mx-auto px-4 py-6 max-w-7xl">
-            {renderContent()}
+        <main className="flex-1 lg:ml-0 p-4 lg:p-6 max-w-full overflow-x-hidden">
+          <div className="lg:hidden mb-4">
+            {/* Mobile tab indicator */}
+            <div className="text-sm text-muted-foreground mb-2">Current Section:</div>
+            <div className="text-lg font-semibold capitalize">{activeTab.replace('-', ' ')}</div>
           </div>
+          
+          {renderContent()}
         </main>
       </div>
     </div>

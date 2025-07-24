@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Edit, Calendar, Clock, Download } from "lucide-react";
 import { CarDetailModal } from "./CarDetailModal";
+import { MobileCarCard } from "./MobileCarCard";
 import { ReportGenerator } from "./ReportGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,32 +49,34 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
 
       if (!specs || specs.length === 0) {
         toast({
-          title: "No spec file available",
-          description: `No spec file available for this code: ${specCode}`,
-          variant: "default",
+          title: "No spec file found",
+          description: `No specification file found for code: ${specCode}`,
+          variant: "destructive",
         });
         return;
       }
 
       const spec = specs[0];
 
-      // Download the file
-      const { data: fileData, error: downloadError } = await supabase.storage
+      // Get signed URL for download
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('spec_files')
-        .download(spec.file_path);
+        .createSignedUrl(spec.file_path, 60); // 60 seconds expiry
 
-      if (downloadError) {
-        console.error('Error downloading file:', downloadError);
+      if (urlError) {
+        console.error('Error creating signed URL:', urlError);
         toast({
-          title: "Download failed",
-          description: "Failed to download the spec file.",
+          title: "Download error",
+          description: "Failed to generate download link.",
           variant: "destructive",
         });
         return;
       }
 
-      // Create download link
-      const url = URL.createObjectURL(fileData);
+      // Download the file
+      const response = await fetch(signedUrlData.signedUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = spec.file_name;
@@ -117,7 +120,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
     // Check for Booked (with misspellings)
     if (cleanStatus === 'booked' || 
         cleanStatus === 'bookd' || 
-        cleanStatus === 'booket' ||
+        cleanStatus === 'booked' ||
         cleanStatus.includes('booked')) {
       return (
         <Badge className="bg-yellow text-yellow-foreground">
@@ -126,32 +129,10 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
       );
     }
     
-    // Check for UNRECEIVED
-    if (status === 'UNRECEIVED') {
-      return (
-        <Badge className="bg-purple-600 text-white">
-          {status}
-        </Badge>
-      );
-    }
-    
-    // Check for Received Full (with misspellings)
-    if (cleanStatus === 'received full' || 
-        cleanStatus === 'receved full' || 
-        cleanStatus === 'received ful' || 
-        cleanStatus === 'recieved full' ||
-        cleanStatus.includes('received') && cleanStatus.includes('full')) {
-      return (
-        <Badge className="bg-dark-orange text-dark-orange-foreground">
-          {status}
-        </Badge>
-      );
-    }
-    
     // Check for Sold (with misspellings)
     if (cleanStatus === 'sold' || 
         cleanStatus === 'sol' || 
-        cleanStatus === 'sould' ||
+        cleanStatus === 'sld' ||
         cleanStatus.includes('sold')) {
       return (
         <Badge className="bg-dark-blue text-dark-blue-foreground">
@@ -160,12 +141,23 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
       );
     }
     
-    // Check for Received ADV (with misspellings)
-    if (cleanStatus === 'received adv' || 
-        cleanStatus === 'receved adv' || 
-        cleanStatus === 'received advance' || 
-        cleanStatus === 'recieved adv' ||
-        (cleanStatus.includes('received') && cleanStatus.includes('adv'))) {
+    // Check for Shipped (with misspellings)
+    if (cleanStatus === 'shipped' || 
+        cleanStatus === 'shipd' || 
+        cleanStatus === 'shiped' ||
+        cleanStatus.includes('shipped')) {
+      return (
+        <Badge className="bg-dark-orange text-dark-orange-foreground">
+          {status}
+        </Badge>
+      );
+    }
+    
+    // Check for UNRECEIVED
+    if (cleanStatus === 'unreceived' || 
+        cleanStatus === 'unrcv' || 
+        cleanStatus === 'unrec' ||
+        cleanStatus.includes('unreceived')) {
       return (
         <Badge className="bg-light-yellow text-light-yellow-foreground">
           {status}
@@ -217,9 +209,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
     const link = document.createElement('a');
     link.href = pdf.url;
     link.download = pdf.name;
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   };
 
   return (
@@ -227,14 +217,35 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle>{title}</CardTitle>
+            <CardTitle className="text-lg lg:text-xl">{title}</CardTitle>
             <Badge variant="outline">{cars.length} cars</Badge>
           </div>
           <ReportGenerator cars={cars} tabName={title} />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {/* Mobile View */}
+        <div className="lg:hidden">
+          {cars.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No cars found</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {cars.map((car) => (
+                <MobileCarCard
+                  key={car.id}
+                  car={car}
+                  onViewDetails={setSelectedCar}
+                  onSpecCodeClick={handleSpecCodeClick}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden lg:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -277,61 +288,58 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                 <TableRow key={car.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">{car.sn}</TableCell>
                   <TableCell>{getStatusBadge(car.status)}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium">
                     <div>
                       <div className="font-medium">{car.name}</div>
-                      <div className="text-sm text-muted-foreground">{car.model}</div>
+                      <div className="text-sm text-muted-foreground">{car.model || '-'}</div>
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm">{car.barCode || '-'}</TableCell>
-                  <TableCell className="font-mono text-sm">{car.chassisNo}</TableCell>
+                  <TableCell className="font-mono text-sm">{car.chassisNo || '-'}</TableCell>
+                  <TableCell>{car.colourExt || '-'}</TableCell>
+                  <TableCell>{car.colourInt || '-'}</TableCell>
                   <TableCell>
-                    {car.colourExt || '-'}
+                    {car.specCode ? (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-primary"
+                        onClick={() => handleSpecCodeClick(car.specCode)}
+                      >
+                        {car.specCode}
+                        <Download className="h-3 w-3 ml-1" />
+                      </Button>
+                    ) : (
+                      '-'
+                    )}
                   </TableCell>
-                  <TableCell>
-                    {car.colourInt || '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto font-mono text-sm text-primary hover:underline"
-                      onClick={() => handleSpecCodeClick(car.specCode)}
-                    >
-                      {car.specCode || '-'}
-                    </Button>
-                  </TableCell>
-                  <TableCell>{car.branch}</TableCell>
-                  <TableCell className="max-w-32 truncate">{car.customerDetails || '-'}</TableCell>
+                  <TableCell>{car.branch || '-'}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{car.customerDetails || '-'}</TableCell>
                   <TableCell>{car.sp || '-'}</TableCell>
                   <TableCell>{car.ampi || '-'}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Calendar className="h-3 w-3" />
-                      {car.receivedDate}
-                    </div>
-                  </TableCell>
+                  <TableCell>{car.receivedDate || '-'}</TableCell>
                   <TableCell>{car.place || '-'}</TableCell>
                   <TableCell>
-                    <div className={`flex items-center gap-1 text-sm font-medium ${getAgingColor(car.aging)}`}>
-                      <Clock className="h-3 w-3" />
-                      {car.aging} days
+                    <div className="flex items-center gap-2">
+                      {car.aging !== undefined && car.aging > 0 && (
+                        <>
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className={getAgingColor(car.aging)}>
+                            {car.aging}d
+                          </span>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedCar(car)}
+                        title="View/Edit details"
                       >
                         <Eye className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedCar(car)}
-                      >
-                        <Edit className="h-3 w-3" />
                       </Button>
                       {getCarPdfs(car.id).length > 0 && (
                         <Button
@@ -342,7 +350,8 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                             if (pdfs.length === 1) {
                               downloadPdf(pdfs[0]);
                             } else {
-                              setSelectedCar(car);
+                              // For multiple PDFs, for now just download the first one
+                              downloadPdf(pdfs[0]);
                             }
                           }}
                           title={`Download PDF${getCarPdfs(car.id).length > 1 ? 's' : ''}`}
@@ -353,8 +362,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                     </div>
                   </TableCell>
                 </TableRow>
-                );
-              })}
+              )})}
             </TableBody>
           </Table>
         </div>
