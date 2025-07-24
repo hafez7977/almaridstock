@@ -193,13 +193,21 @@ class GoogleSheetsService {
       console.log(`Header ${index}: "${header}" (lowercase: "${header.toLowerCase()}")`);
     });
 
-    return dataRows.map((row, index) => {
-      const car: any = { id: `sheet_${index}` };
-      
-      // Only log first row for debugging
-      if (index === 0) {
-        console.log(`Processing first row:`, row);
-      }
+    return dataRows
+      .filter((row, index) => {
+        // Skip empty rows
+        if (!row || row.every(cell => !cell || cell.trim() === '')) {
+          return false;
+        }
+        return true;
+      })
+      .map((row, index) => {
+        const car: any = { id: `sheet_${index}` };
+        
+        // Only log first row for debugging
+        if (index === 0) {
+          console.log(`Processing first row:`, row);
+        }
       
       headers.forEach((header, colIndex) => {
         const value = row[colIndex] || '';
