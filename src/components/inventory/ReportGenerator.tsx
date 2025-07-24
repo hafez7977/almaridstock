@@ -94,8 +94,17 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       return;
     }
 
-    // Sort cars: Booked first, then Available
+    // Sort cars: First by description, then by status (Booked first, then Available) within each description group
     const sortedCars = [...availableAndBookedCars].sort((a, b) => {
+      // First, group by description (case-insensitive)
+      const aDescription = (a.description || '').toLowerCase().trim();
+      const bDescription = (b.description || '').toLowerCase().trim();
+      
+      if (aDescription !== bDescription) {
+        return aDescription.localeCompare(bDescription);
+      }
+      
+      // Within same description group, sort by status (booked first)
       const aStatus = a.status.toLowerCase().trim();
       const bStatus = b.status.toLowerCase().trim();
       
