@@ -10,36 +10,79 @@ class GoogleAuthService {
     
     try {
       console.log('Initializing Google Auth for mobile (Supabase)...');
+      
+      // Check if Supabase is properly configured
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session check during init:', !!session);
+      
       this.isInitialized = true;
+      console.log('Google Auth initialization completed successfully');
     } catch (error) {
       console.error('Failed to initialize Google Auth:', error);
-      throw error;
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        fullError: error
+      });
+      throw new Error(`Google Auth initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   async signIn(): Promise<GoogleUser> {
-    console.log('Starting Google sign-in process for mobile...');
+    console.log('Starting Google sign-in process for mobile (Supabase OAuth)...');
     
     try {
+      // For mobile apps, we need to use the mobile-compatible redirect
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const redirectTo = isMobile 
+        ? `${window.location.origin}/` 
+        : window.location.origin;
+
+      console.log('Detected environment:', isMobile ? 'mobile' : 'web');
+      console.log('Using redirect URL:', redirectTo);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-          redirectTo: window.location.origin
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
       if (error) {
         console.error('Supabase OAuth error:', error);
+        console.error('OAuth error details:', {
+          message: error.message,
+          status: error.status,
+          details: error
+        });
         throw new Error(`Google auth error: ${error.message}`);
       }
 
-      // Wait for the auth state change
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('OAuth request initiated successfully, data:', data);
+
+      // In mobile environment, the OAuth flow will redirect and we need to handle the callback
+      // For now, we'll check if we already have a session from a completed OAuth flow
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session?.user) {
-        throw new Error('No user session after OAuth');
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error(`Session error: ${sessionError.message}`);
       }
+
+      if (!session?.user) {
+        // This is expected in OAuth flow - the user will be redirected and come back
+        console.log('No immediate session - OAuth redirect in progress');
+        throw new Error('OAuth redirect in progress. Please complete sign-in in the opened window.');
+      }
+
+      console.log('Session found after OAuth:', !!session);
+      console.log('User found in session:', !!session.user);
+      console.log('Provider token available:', !!session.provider_token);
 
       const user: GoogleUser = {
         email: session.user.email || '',
@@ -52,11 +95,20 @@ class GoogleAuthService {
         localStorage.setItem('google_access_token', session.provider_token);
         // Set a far future expiration since Supabase handles refresh
         localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
+        console.log('Stored Google access token successfully');
+      } else {
+        console.warn('No provider token in session - Google Sheets access may not work');
       }
 
+      console.log('Sign-in completed successfully for user:', user.email);
       return user;
     } catch (error) {
       console.error('Google sign-in error:', error);
+      console.error('Sign-in error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        type: typeof error
+      });
       throw error;
     }
   }
