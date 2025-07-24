@@ -8,8 +8,13 @@ class GoogleAuthService {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
     
-    console.log('Initializing Google Auth for mobile (Supabase)...');
-    this.isInitialized = true;
+    try {
+      console.log('Initializing Google Auth for mobile (Supabase)...');
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize Google Auth:', error);
+      throw error;
+    }
   }
 
   async signIn(): Promise<GoogleUser> {

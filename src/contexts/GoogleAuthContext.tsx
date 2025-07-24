@@ -88,6 +88,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         
         // Clear everything on initialization error
         await googleAuthService.signOut();
@@ -97,7 +98,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
           isAuthenticated: false,
           isLoading: false,
           user: null,
-          error: error instanceof Error ? error.message : 'Failed to initialize Google Auth',
+          error: error instanceof Error ? error.message : `Failed to initialize Google Auth: ${JSON.stringify(error)}`,
         });
       }
     };
