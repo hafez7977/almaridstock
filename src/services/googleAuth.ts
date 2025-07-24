@@ -36,50 +36,26 @@ class GoogleAuthService {
 
   private loadGoogleScript(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (window.google?.accounts) {
-        console.log('Google script already loaded');
-        resolve();
-        return;
-      }
+      // Since script is loaded in HTML, just wait for API to be available
+      console.log('Waiting for Google API to initialize...');
+      
+      const checkAPI = (attempts = 0) => {
+        if (window.google?.accounts) {
+          console.log('Google API initialized successfully');
+          resolve();
+          return;
+        }
 
-      // Check if script is already in DOM
-      const existingScript = document.querySelector('script[src*="gsi/client"]');
-      if (existingScript) {
-        console.log('Google script tag found, waiting for API...');
-        // Wait for the API to be available
-        const checkAPI = () => {
-          if (window.google?.accounts) {
-            resolve();
-          } else {
-            setTimeout(checkAPI, 100);
-          }
-        };
-        checkAPI();
-        return;
-      }
+        if (attempts > 50) { // 5 seconds timeout
+          console.error('Google API failed to initialize after 5 seconds');
+          reject(new Error('Google API failed to initialize - script may not have loaded properly'));
+          return;
+        }
 
-      console.log('Loading Google script dynamically...');
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        console.log('Google script loaded successfully');
-        // Wait for the API to initialize
-        const checkAPI = () => {
-          if (window.google?.accounts) {
-            resolve();
-          } else {
-            setTimeout(checkAPI, 100);
-          }
-        };
-        checkAPI();
+        setTimeout(() => checkAPI(attempts + 1), 100);
       };
-      script.onerror = (error) => {
-        console.error('Failed to load Google script:', error);
-        reject(new Error('Failed to load Google script - check network connection'));
-      };
-      document.head.appendChild(script);
+      
+      checkAPI();
     });
   }
 
