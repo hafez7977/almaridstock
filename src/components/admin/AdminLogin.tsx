@@ -12,23 +12,25 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin = ({ open, onOpenChange }: AdminLoginProps) => {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useAdmin();
   const { toast } = useToast();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(password)) {
+    if (login(username, password)) {
       toast({
         title: "Success",
         description: "Logged in as admin",
       });
       onOpenChange(false);
+      setUsername('');
       setPassword('');
     } else {
       toast({
         title: "Error",
-        description: "Invalid password",
+        description: "Invalid username or password",
         variant: "destructive",
       });
     }
@@ -41,6 +43,16 @@ export const AdminLogin = ({ open, onOpenChange }: AdminLoginProps) => {
           <DialogTitle>Admin Login</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter admin username"
+            />
+          </div>
           <div>
             <Label htmlFor="password">Password</Label>
             <Input

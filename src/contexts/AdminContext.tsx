@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 interface AdminContextType {
   isAdmin: boolean;
-  login: (password: string) => boolean;
+  login: (username: string, password: string) => boolean;
   logout: () => void;
 }
 
@@ -35,9 +35,9 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     }
   }, []);
 
-  const login = (password: string): boolean => {
-    // Simple password check - in production, use proper authentication
-    if (password === 'admin123') {
+  const login = (username: string, password: string): boolean => {
+    // Simple credentials check - in production, use proper authentication
+    if (username === 'admin' && password === 'AlMarid1@3') {
       const session = {
         expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
       };
