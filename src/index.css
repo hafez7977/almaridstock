@@ -126,10 +126,5 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background-color: white !important; /* Force white background on mobile */
-  }
-
-  html {
-    background-color: white !important; /* Force white background on html */
   }
 }
