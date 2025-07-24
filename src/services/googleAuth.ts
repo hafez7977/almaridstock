@@ -36,25 +36,38 @@ class GoogleAuthService {
 
   private loadGoogleScript(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Since script is loaded in HTML, just wait for API to be available
-      console.log('Waiting for Google API to initialize...');
+      console.log('Checking if Google script is loaded in HTML...');
+      
+      // Check if script tag exists
+      const scriptTag = document.querySelector('script[src*="gsi/client"]');
+      console.log('Google script tag found:', !!scriptTag);
+      
+      // Check current state of window.google
+      console.log('window.google exists:', !!window.google);
+      console.log('window.google.accounts exists:', !!window.google?.accounts);
       
       const checkAPI = (attempts = 0) => {
+        console.log(`Attempt ${attempts + 1}: Checking Google API availability...`);
+        console.log('window.google:', !!window.google);
+        console.log('window.google.accounts:', !!window.google?.accounts);
+        
         if (window.google?.accounts) {
           console.log('Google API initialized successfully');
           resolve();
           return;
         }
 
-        if (attempts > 50) { // 5 seconds timeout
-          console.error('Google API failed to initialize after 5 seconds');
-          reject(new Error('Google API failed to initialize - script may not have loaded properly'));
+        if (attempts >= 30) { // 3 seconds timeout
+          const errorMsg = `Google API failed to initialize after ${attempts + 1} attempts. Script tag present: ${!!scriptTag}`;
+          console.error(errorMsg);
+          reject(new Error(errorMsg));
           return;
         }
 
         setTimeout(() => checkAPI(attempts + 1), 100);
       };
       
+      // Start checking immediately
       checkAPI();
     });
   }
