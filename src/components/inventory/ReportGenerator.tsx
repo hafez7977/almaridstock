@@ -199,8 +199,13 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         }
       });
       
-      // Set column width with some padding
-      column.width = Math.min(Math.max(maxLength + 2, 10), 50);
+      // Special handling for barcode column (index 4)
+      if (index === 4) { // Barcode column
+        column.width = Math.max(maxLength + 3, 15); // Ensure minimum 15 width for barcodes
+      } else {
+        // Set column width with some padding for other columns
+        column.width = Math.min(Math.max(maxLength + 2, 10), 50);
+      }
     });
 
     // Generate buffer and download
