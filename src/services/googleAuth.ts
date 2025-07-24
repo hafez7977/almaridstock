@@ -24,11 +24,11 @@ class GoogleAuthService {
     if (this.isInitialized) return;
 
     try {
-      // For native app, we'll use a simplified approach
-      console.log('Initializing Google Auth for native app...');
+      console.log('Initializing Google Auth...');
       
       // Check if running in native context
-      const isNative = window.location.protocol === 'capacitor:';
+      const isNative = Capacitor.isNativePlatform();
+      console.log('Is native platform:', isNative);
       
       if (isNative) {
         // Native implementation - simplified auth flow
@@ -37,7 +37,9 @@ class GoogleAuthService {
       }
 
       // Web implementation
+      console.log('Loading Google script for web...');
       await this.loadGoogleScript();
+      console.log('Google script loaded successfully');
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize Google Auth:', error);
