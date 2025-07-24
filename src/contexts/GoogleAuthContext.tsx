@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 
 interface GoogleAuthContextType {
   user: User | null;
@@ -76,30 +78,55 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
+      // For mobile platforms, use in-app browser for better UX
+      if (Capacitor.isNativePlatform()) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+            redirectTo: 'app.alamaridstock://login-callback/'
           }
-        }
-      });
-
-      if (error) {
-        console.error('Google OAuth error:', error);
-        console.error('Error details:', {
-          message: error.message,
-          status: error.status,
-          details: error
         });
-        setIsLoading(false);
-        throw error;
+
+        if (error) {
+          console.error('Google OAuth error:', error);
+          setIsLoading(false);
+          throw error;
+        }
+
+        // Open the OAuth URL in the in-app browser
+        if (data.url) {
+          await Browser.open({
+            url: data.url,
+            presentationStyle: 'popover', // iOS specific: better integration
+            windowName: '_self'
+          });
+        }
+      } else {
+        // Web browser flow
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            }
+          }
+        });
+
+        if (error) {
+          console.error('Google OAuth error:', error);
+          setIsLoading(false);
+          throw error;
+        }
       }
 
-      console.log('OAuth sign-in initiated successfully, data:', data);
-      console.log('You should be redirected to Google for authentication');
+      console.log('OAuth sign-in initiated successfully');
       // Don't set loading to false here - let the auth state change handle it
     } catch (error) {
       console.error('Sign-in error:', error);
