@@ -1,5 +1,6 @@
 import { GoogleUser } from '@/types/google-sheets';
 import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 // Capacitor Web Google Auth (works in both web and native)
 declare global {
@@ -31,7 +32,12 @@ class GoogleAuthService {
       console.log('Is native platform:', isNative);
       
       if (isNative) {
-        // Native implementation - simplified auth flow
+        // Initialize Capacitor Google Auth
+        await GoogleAuth.initialize({
+          clientId: GOOGLE_CLIENT_ID,
+          scopes: ['profile', 'email', 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly'],
+          grantOfflineAccess: true,
+        });
         this.isInitialized = true;
         return;
       }
@@ -72,8 +78,27 @@ class GoogleAuthService {
     const isNative = Capacitor.isNativePlatform();
     
     if (isNative) {
-      // For mobile, show message that Google authentication needs to be set up
-      throw new Error('Mobile Google authentication is not yet configured. Please use the web version for now or contact support to set up mobile authentication.');
+      // Use Capacitor Google Auth for mobile
+      try {
+        const result = await GoogleAuth.signIn();
+        console.log('Mobile Google sign-in successful:', result);
+        
+        // Store the access token
+        if (result.authentication?.accessToken) {
+          const expiresAt = Date.now() + (3600 * 1000); // 1 hour default
+          localStorage.setItem('google_access_token', result.authentication.accessToken);
+          localStorage.setItem('google_token_expires_at', expiresAt.toString());
+        }
+        
+        return {
+          email: result.email,
+          name: result.name,
+          picture: result.imageUrl || '',
+        };
+      } catch (error) {
+        console.error('Mobile Google Auth error:', error);
+        throw new Error(`Mobile Google authentication failed: ${error}`);
+      }
     }
 
     // Web implementation
@@ -161,7 +186,18 @@ class GoogleAuthService {
     const isNative = Capacitor.isNativePlatform();
     
     if (isNative) {
-      // No token refresh on mobile without proper auth
+      // Try to refresh token using Capacitor Google Auth
+      try {
+        const result = await GoogleAuth.refresh();
+        if (result.accessToken) {
+          const expiresAt = Date.now() + (3600 * 1000); // 1 hour default
+          localStorage.setItem('google_access_token', result.accessToken);
+          localStorage.setItem('google_token_expires_at', expiresAt.toString());
+          return result.accessToken;
+        }
+      } catch (error) {
+        console.error('Failed to refresh mobile token:', error);
+      }
       return null;
     }
 
