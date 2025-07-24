@@ -425,8 +425,10 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-6">
-          <GoogleAuthButton />
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-6">
+          <div className="w-full max-w-md mx-auto">
+            <GoogleAuthButton />
+          </div>
         </div>
       </div>
     );
@@ -437,10 +439,10 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Loading car data from Google Sheets...</span>
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="text-sm sm:text-base text-muted-foreground">Loading car data from Google Sheets...</span>
           </div>
         </div>
       </div>
@@ -452,16 +454,16 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-6">
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-6">
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle className="text-destructive">Error Loading Data</CardTitle>
+              <CardTitle className="text-destructive text-center">Error Loading Data</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
                 {error instanceof Error ? error.message : 'Failed to load data from Google Sheets'}
               </p>
-              <Button onClick={() => window.location.reload()}>
+              <Button onClick={() => window.location.reload()} className="w-full">
                 Try Again
               </Button>
             </CardContent>
@@ -472,21 +474,22 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <Header />
-      <div className="flex">
-        <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 lg:ml-0 bg-white">
-          {/* Mobile header with current section */}
-          <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 mt-16">
-            <div className="text-xs text-gray-500 uppercase tracking-wide">Current Section</div>
-            <div className="text-lg font-semibold text-gray-900 capitalize">
-              {activeTab.replace('-', ' ')}
-            </div>
+      <div className="flex h-[calc(100vh-80px)]">
+        {/* Desktop Navigation */}
+        <div className="hidden lg:block">
+          <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+        
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* Mobile Navigation */}
+          <div className="lg:hidden border-b border-border bg-background">
+            <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
           
-          {/* Content area */}
-          <div className="p-4 lg:p-6 bg-white">
+          {/* Content area with mobile-optimized padding */}
+          <div className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6">
             {renderContent()}
           </div>
         </main>

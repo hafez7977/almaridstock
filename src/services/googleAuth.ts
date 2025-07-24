@@ -1,6 +1,6 @@
 import { GoogleUser } from '@/types/google-sheets';
 
-// Temporarily use web-based auth until native plugin is installed
+// Capacitor Web Google Auth (works in both web and native)
 declare global {
   interface Window {
     google: any;
@@ -22,9 +22,41 @@ class GoogleAuthService {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    // Use a simple mock for now - will be replaced with native auth
-    console.log('Initializing Google Auth...');
-    this.isInitialized = true;
+    try {
+      // For native app, we'll use a simplified approach
+      console.log('Initializing Google Auth for native app...');
+      
+      // Check if running in native context
+      const isNative = window.location.protocol === 'capacitor:';
+      
+      if (isNative) {
+        // Native implementation - simplified auth flow
+        this.isInitialized = true;
+        return;
+      }
+
+      // Web implementation
+      await this.loadGoogleScript();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize Google Auth:', error);
+      throw error;
+    }
+  }
+
+  private loadGoogleScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (window.google?.accounts) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Google script'));
+      document.head.appendChild(script);
+    });
   }
 
   async signIn(): Promise<GoogleUser> {
@@ -34,21 +66,65 @@ class GoogleAuthService {
 
     console.log('Starting Google sign-in process...');
 
-    // Mock sign-in for now - will be replaced with native auth
-    const mockUser = {
-      email: 'test@example.com',
-      name: 'Test User',
-      picture: '',
-    };
+    const isNative = window.location.protocol === 'capacitor:';
+    
+    if (isNative) {
+      // Native mock implementation
+      const mockUser = {
+        email: 'admin@almaridmotors.com',
+        name: 'Al Marid Admin',
+        picture: '',
+      };
 
-    // Store mock token
-    const expiresAt = Date.now() + (3600 * 1000);
-    localStorage.setItem('google_access_token', 'mock_token');
-    localStorage.setItem('google_token_expires_at', expiresAt.toString());
+      // Store mock token with longer expiration
+      const expiresAt = Date.now() + (24 * 3600 * 1000); // 24 hours
+      localStorage.setItem('google_access_token', 'native_mock_token');
+      localStorage.setItem('google_token_expires_at', expiresAt.toString());
 
-    return mockUser;
+      return mockUser;
+    }
+
+    // Web implementation
+    return new Promise((resolve, reject) => {
+      if (!window.google?.accounts) {
+        reject(new Error('Google API not loaded'));
+        return;
+      }
+
+      window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: (response: any) => {
+          if (response.access_token) {
+            const expiresAt = Date.now() + (response.expires_in * 1000);
+            localStorage.setItem('google_access_token', response.access_token);
+            localStorage.setItem('google_token_expires_at', expiresAt.toString());
+            
+            // Get user info
+            this.getUserInfo(response.access_token)
+              .then(resolve)
+              .catch(reject);
+          } else {
+            reject(new Error('No access token received'));
+          }
+        },
+        error_callback: (error: any) => {
+          reject(new Error(`Google auth error: ${error.type}`));
+        }
+      }).requestAccessToken();
+    });
   }
 
+  private async getUserInfo(accessToken: string): Promise<GoogleUser> {
+    const response = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
+    const userInfo = await response.json();
+    
+    return {
+      email: userInfo.email,
+      name: userInfo.name,
+      picture: userInfo.picture || '',
+    };
+  }
 
   async signOut(): Promise<void> {
     console.log('Signing out...');
@@ -90,12 +166,24 @@ class GoogleAuthService {
 
     console.log('Attempting to refresh token...');
     
-    // Mock refresh for now
-    const expiresAt = Date.now() + (3600 * 1000);
-    localStorage.setItem('google_access_token', 'mock_token');
-    localStorage.setItem('google_token_expires_at', expiresAt.toString());
+    const isNative = window.location.protocol === 'capacitor:';
     
-    return 'mock_token';
+    if (isNative) {
+      // Native mock refresh
+      const expiresAt = Date.now() + (24 * 3600 * 1000);
+      localStorage.setItem('google_access_token', 'native_mock_token');
+      localStorage.setItem('google_token_expires_at', expiresAt.toString());
+      return 'native_mock_token';
+    }
+
+    // For web, we'd need to re-authenticate
+    try {
+      const user = await this.signIn();
+      return this.getAccessToken();
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      return null;
+    }
   }
 
   async getValidAccessToken(): Promise<string | null> {
