@@ -72,6 +72,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   }, []);
 
   const signIn = async () => {
+    console.log('Sign-in button clicked');
     setIsLoading(true);
     
     try {
@@ -89,11 +90,18 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
 
       if (error) {
         console.error('Google OAuth error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          details: error
+        });
         setIsLoading(false);
         throw error;
       }
 
-      console.log('OAuth sign-in initiated successfully');
+      console.log('OAuth sign-in initiated successfully, data:', data);
+      console.log('You should be redirected to Google for authentication');
+      // Don't set loading to false here - let the auth state change handle it
     } catch (error) {
       console.error('Sign-in error:', error);
       setIsLoading(false);
