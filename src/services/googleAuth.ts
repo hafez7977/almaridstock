@@ -177,11 +177,14 @@ class GoogleAuthService {
   async getValidAccessToken(): Promise<string | null> {
     console.log('getValidAccessToken called');
     
-    // Check current session
+    // Check current session first
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('Current session exists:', !!session);
+    console.log('Session has provider token:', !!session?.provider_token);
     
     if (session?.provider_token) {
       localStorage.setItem('google_access_token', session.provider_token);
+      localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
       console.log('Returning valid token from Supabase session');
       return session.provider_token;
     }
@@ -193,7 +196,7 @@ class GoogleAuthService {
       return token;
     }
 
-    console.log('No valid token available');
+    console.log('No valid token available - user needs to sign in');
     return null;
   }
 }

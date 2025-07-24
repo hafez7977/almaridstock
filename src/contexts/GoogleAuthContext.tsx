@@ -60,6 +60,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             console.log('Auth state change event:', event, 'Session:', !!session);
+            console.log('Provider token exists:', !!session?.provider_token);
             
             if (event === 'SIGNED_IN' && session?.user) {
               console.log('User signed in via auth state change');
@@ -74,6 +75,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
                 localStorage.setItem('google_access_token', session.provider_token);
                 localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
                 console.log('Stored Google access token from auth state change');
+              } else {
+                console.warn('No provider token in session - Google Sheets access may not work');
               }
               localStorage.setItem('google_user', JSON.stringify(user));
               
@@ -95,6 +98,12 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
                 user: null,
                 error: null,
               });
+            } else if (event === 'TOKEN_REFRESHED' && session) {
+              console.log('Token refreshed via auth state change');
+              if (session.provider_token) {
+                localStorage.setItem('google_access_token', session.provider_token);
+                console.log('Updated Google access token after refresh');
+              }
             }
           }
         );
