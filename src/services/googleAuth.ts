@@ -224,26 +224,22 @@ class GoogleAuthService {
   }
 
   async getValidAccessToken(): Promise<string | null> {
+    console.log('getValidAccessToken called');
+    
     // First check if we have a valid non-expired token
     const token = this.getAccessToken();
+    console.log('Current token exists:', !!token);
+    console.log('Token expired:', this.isTokenExpired());
     
     if (token && !this.isTokenExpired()) {
+      console.log('Returning valid existing token');
       return token;
     }
 
-    console.log('Token expired or missing, attempting refresh...');
+    console.log('Token expired or missing, user needs to sign in again');
     
-    // Token is expired or doesn't exist, try to refresh
-    try {
-      const refreshedToken = await this.refreshToken();
-      if (refreshedToken) {
-        return refreshedToken;
-      }
-    } catch (error) {
-      console.error('Failed to refresh token:', error);
-    }
-
-    // Clear invalid tokens
+    // For web, we cannot automatically refresh tokens
+    // Clear invalid tokens and require user to sign in again
     this.signOut();
     return null;
   }
