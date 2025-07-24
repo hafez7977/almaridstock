@@ -79,6 +79,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          redirectTo: 'app.alamaridstock://login-callback/',
           scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
           queryParams: {
             access_type: 'offline',
