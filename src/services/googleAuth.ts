@@ -32,13 +32,9 @@ class GoogleAuthService {
     console.log('Starting Google sign-in process for mobile (Supabase OAuth)...');
     
     try {
-      // For mobile apps, we need to use the custom URL scheme
-      const isCapacitor = window.location.protocol === 'capacitor:';
-      const redirectTo = isCapacitor 
-        ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://oauth/callback'
-        : `${window.location.origin}/oauth/callback`;
+      // Use the current origin for OAuth callback
+      const redirectTo = `${window.location.origin}/oauth/callback`;
 
-      console.log('Detected environment:', isCapacitor ? 'mobile' : 'web');
       console.log('Using redirect URL:', redirectTo);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
