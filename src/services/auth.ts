@@ -15,7 +15,7 @@ class AuthService {
         provider: 'google',
         options: {
           scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-          redirectTo: `${window.location.origin}`,
+          redirectTo: `${window.location.origin}/`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
