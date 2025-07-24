@@ -42,25 +42,42 @@ class GoogleAuthService {
         return;
       }
 
-      console.log('Loading Google script from:', 'https://accounts.google.com/gsi/client');
+      // Check if script is already in DOM
+      const existingScript = document.querySelector('script[src*="gsi/client"]');
+      if (existingScript) {
+        console.log('Google script tag found, waiting for API...');
+        // Wait for the API to be available
+        const checkAPI = () => {
+          if (window.google?.accounts) {
+            resolve();
+          } else {
+            setTimeout(checkAPI, 100);
+          }
+        };
+        checkAPI();
+        return;
+      }
+
+      console.log('Loading Google script dynamically...');
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.defer = true;
       script.onload = () => {
         console.log('Google script loaded successfully');
-        // Wait a bit for the API to initialize
-        setTimeout(() => {
+        // Wait for the API to initialize
+        const checkAPI = () => {
           if (window.google?.accounts) {
             resolve();
           } else {
-            reject(new Error('Google API not available after script load'));
+            setTimeout(checkAPI, 100);
           }
-        }, 100);
+        };
+        checkAPI();
       };
       script.onerror = (error) => {
         console.error('Failed to load Google script:', error);
-        reject(new Error('Failed to load Google script - check network connection or script URL'));
+        reject(new Error('Failed to load Google script - check network connection'));
       };
       document.head.appendChild(script);
     });
