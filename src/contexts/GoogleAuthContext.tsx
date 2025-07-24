@@ -38,24 +38,34 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('Initializing auth context...');
+      
       try {
+        setAuthState(prev => ({ ...prev, isLoading: true }));
+        
         await googleAuthService.initialize();
         
-        // Check if we have a valid token (not just any token)
+        // Check if we have a valid token
         const validToken = await googleAuthService.getValidAccessToken();
+        console.log('Valid token available:', !!validToken);
         
         if (validToken) {
           // We have a valid token, check for saved user info
           const savedUser = localStorage.getItem('google_user');
+          console.log('Saved user available:', !!savedUser);
+          
           if (savedUser) {
+            const user = JSON.parse(savedUser);
+            console.log('Setting authenticated state with user:', user.email);
             setAuthState({
               isAuthenticated: true,
               isLoading: false,
-              user: JSON.parse(savedUser),
+              user,
               error: null,
             });
           } else {
             // Token exists but no user info, clear auth state
+            console.log('Token exists but no user info - clearing auth');
             await googleAuthService.signOut();
             setAuthState({
               isAuthenticated: false,
@@ -66,6 +76,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
           }
         } else {
           // No valid token, ensure we're signed out
+          console.log('No valid token - setting unauthenticated state');
           await googleAuthService.signOut();
           localStorage.removeItem('google_user');
           setAuthState({
@@ -76,6 +87,12 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
           });
         }
       } catch (error) {
+        console.error('Auth initialization error:', error);
+        
+        // Clear everything on initialization error
+        await googleAuthService.signOut();
+        localStorage.removeItem('google_user');
+        
         setAuthState({
           isAuthenticated: false,
           isLoading: false,

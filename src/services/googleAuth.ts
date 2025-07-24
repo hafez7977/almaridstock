@@ -152,13 +152,20 @@ class GoogleAuthService {
 
   getAccessToken(): string | null {
     const token = localStorage.getItem('google_access_token');
-    if (!token) return null;
-
-    // Check if token is expired
-    if (this.isTokenExpired()) {
+    console.log('getAccessToken - token exists:', !!token);
+    
+    if (!token) {
+      console.log('No token found in localStorage');
       return null;
     }
 
+    // Check if token is expired
+    if (this.isTokenExpired()) {
+      console.log('Token is expired');
+      return null;
+    }
+
+    console.log('Token is valid');
     return token;
   }
 
