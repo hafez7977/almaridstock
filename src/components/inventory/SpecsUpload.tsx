@@ -254,23 +254,31 @@ export const SpecsUpload = () => {
     if (!isAdmin) return;
     
     try {
-      // Delete from storage first
-      const { error: storageError } = await supabase.storage
-        .from('spec_files')
-        .remove([spec.file_path]);
-
-      if (storageError) throw storageError;
-
-      // Then delete from database
+      console.log('Deleting spec:', spec.id, spec.file_path);
+      
+      // Delete from database first
       const { error: dbError } = await supabase
         .from('specs')
         .delete()
         .eq('id', spec.id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database delete error:', dbError);
+        throw dbError;
+      }
 
-      // Immediately remove from local state for instant UI update
-      setSpecs(prev => prev.filter(s => s.id !== spec.id));
+      // Then delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('spec_files')
+        .remove([spec.file_path]);
+
+      if (storageError) {
+        console.error('Storage delete error:', storageError);
+        // Don't throw storage error as the database record is already deleted
+      }
+
+      // Refetch data to ensure consistency
+      await fetchSpecs();
 
       toast({
         title: "File deleted",
