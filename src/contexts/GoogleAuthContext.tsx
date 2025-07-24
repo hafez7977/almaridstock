@@ -56,71 +56,148 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         await googleAuthService.initialize();
         console.log('Auth service initialized successfully');
         
-        // Check for OAuth callback first (for mobile apps)
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
-        const hasOAuthParams = urlParams.has('code') || hashParams.has('access_token') || hashParams.has('refresh_token');
-        
-        if (hasOAuthParams) {
-          console.log('OAuth callback detected, processing...');
-          // Let Supabase handle the OAuth callback
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('OAuth callback session error:', error);
-            throw error;
-          }
-          
-          if (session?.user) {
-            console.log('OAuth callback successful, setting authenticated state');
-            const user = {
-              email: session.user.email || '',
-              name: session.user.user_metadata?.full_name || session.user.email || '',
-              picture: session.user.user_metadata?.avatar_url || '',
-            };
+        // Set up Supabase auth state listener for real-time updates
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log('Auth state change event:', event, 'Session:', !!session);
             
-            // Store the access token and user info
-            if (session.provider_token) {
-              localStorage.setItem('google_access_token', session.provider_token);
-              localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
-            }
-            localStorage.setItem('google_user', JSON.stringify(user));
-            
-            setAuthState({
-              isAuthenticated: true,
-              isLoading: false,
-              user,
-              error: null,
-            });
-            
-            setIsInitialized(true);
-            return;
-          }
-        }
-        
-        // Check if we have a valid token and session
-        const validToken = await googleAuthService.getValidAccessToken();
-        console.log('Valid token available:', !!validToken);
-        
-        if (validToken) {
-          // We have a valid token, check for saved user info
-          const savedUser = localStorage.getItem('google_user');
-          console.log('Saved user available:', !!savedUser);
-          
-          if (savedUser) {
-            try {
-              const user = JSON.parse(savedUser);
-              console.log('Setting authenticated state with user:', user.email);
+            if (event === 'SIGNED_IN' && session?.user) {
+              console.log('User signed in via auth state change');
+              const user = {
+                email: session.user.email || '',
+                name: session.user.user_metadata?.full_name || session.user.email || '',
+                picture: session.user.user_metadata?.avatar_url || '',
+              };
+              
+              // Store the access token and user info
+              if (session.provider_token) {
+                localStorage.setItem('google_access_token', session.provider_token);
+                localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
+                console.log('Stored Google access token from auth state change');
+              }
+              localStorage.setItem('google_user', JSON.stringify(user));
+              
               setAuthState({
                 isAuthenticated: true,
                 isLoading: false,
                 user,
                 error: null,
               });
-            } catch (parseError) {
-              console.error('Failed to parse saved user data:', parseError);
-              // Clear corrupted data
+            } else if (event === 'SIGNED_OUT') {
+              console.log('User signed out via auth state change');
+              localStorage.removeItem('google_access_token');
+              localStorage.removeItem('google_token_expires_at');
               localStorage.removeItem('google_user');
+              
+              setAuthState({
+                isAuthenticated: false,
+                isLoading: false,
+                user: null,
+                error: null,
+              });
+            }
+          }
+        );
+        
+        // Check for OAuth callback parameters (mobile-specific)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+        const isCapacitor = window.location.protocol === 'capacitor:';
+        
+        // Mobile OAuth callback detection
+        const hasOAuthParams = urlParams.has('code') || 
+                              hashParams.has('access_token') || 
+                              hashParams.has('refresh_token') ||
+                              urlParams.has('state') ||
+                              hashParams.has('state');
+        
+        console.log('OAuth callback check:', {
+          hasOAuthParams,
+          isCapacitor,
+          url: window.location.href,
+          search: window.location.search,
+          hash: window.location.hash
+        });
+        
+        if (hasOAuthParams || isCapacitor) {
+          console.log('Mobile OAuth callback detected, waiting for session...');
+          
+          // Give Supabase time to process the OAuth callback
+          let retryCount = 0;
+          const maxRetries = 10;
+          const checkSession = async () => {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+              console.error('OAuth callback session error:', error);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                console.log(`Retrying session check (${retryCount}/${maxRetries})...`);
+                setTimeout(checkSession, 1000);
+                return;
+              }
+              throw error;
+            }
+            
+            if (session?.user) {
+              console.log('OAuth callback successful after', retryCount, 'retries');
+              // The auth state listener will handle the rest
+              return;
+            }
+            
+            if (retryCount < maxRetries) {
+              retryCount++;
+              console.log(`Session not ready, retrying (${retryCount}/${maxRetries})...`);
+              setTimeout(checkSession, 1000);
+            } else {
+              console.log('Session not available after maximum retries');
+              // Continue with normal initialization
+              await normalInitialization();
+            }
+          };
+          
+          await checkSession();
+          setIsInitialized(true);
+          return;
+        }
+        
+        await normalInitialization();
+        
+        async function normalInitialization() {
+          // Check if we have a valid token and session
+          const validToken = await googleAuthService.getValidAccessToken();
+          console.log('Valid token available:', !!validToken);
+          
+          if (validToken) {
+            // We have a valid token, check for saved user info
+            const savedUser = localStorage.getItem('google_user');
+            console.log('Saved user available:', !!savedUser);
+            
+            if (savedUser) {
+              try {
+                const user = JSON.parse(savedUser);
+                console.log('Setting authenticated state with user:', user.email);
+                setAuthState({
+                  isAuthenticated: true,
+                  isLoading: false,
+                  user,
+                  error: null,
+                });
+              } catch (parseError) {
+                console.error('Failed to parse saved user data:', parseError);
+                // Clear corrupted data
+                localStorage.removeItem('google_user');
+                await googleAuthService.signOut();
+                setAuthState({
+                  isAuthenticated: false,
+                  isLoading: false,
+                  user: null,
+                  error: null,
+                });
+              }
+            } else {
+              // Token exists but no user info, this shouldn't happen in normal flow
+              console.log('Token exists but no user info - clearing auth state');
               await googleAuthService.signOut();
               setAuthState({
                 isAuthenticated: false,
@@ -130,9 +207,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
               });
             }
           } else {
-            // Token exists but no user info, this shouldn't happen in normal flow
-            console.log('Token exists but no user info - clearing auth state');
-            await googleAuthService.signOut();
+            // No valid token, set clean unauthenticated state
+            console.log('No valid token found - setting clean unauthenticated state');
             setAuthState({
               isAuthenticated: false,
               isLoading: false,
@@ -140,15 +216,6 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
               error: null,
             });
           }
-        } else {
-          // No valid token, set clean unauthenticated state
-          console.log('No valid token found - setting clean unauthenticated state');
-          setAuthState({
-            isAuthenticated: false,
-            isLoading: false,
-            user: null,
-            error: null,
-          });
         }
         
         setIsInitialized(true);
@@ -191,6 +258,11 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     };
 
     initializeAuth();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      // The subscription cleanup will be handled by the auth state listener
+    };
   }, [isInitialized]);
 
   const signIn = async () => {
