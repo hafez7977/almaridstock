@@ -212,19 +212,28 @@ class GoogleAuthService {
   }
 
   async getValidAccessToken(): Promise<string | null> {
+    // First check if we have a valid non-expired token
     const token = this.getAccessToken();
     
-    if (token) {
+    if (token && !this.isTokenExpired()) {
       return token;
     }
 
+    console.log('Token expired or missing, attempting refresh...');
+    
     // Token is expired or doesn't exist, try to refresh
     try {
-      return await this.refreshToken();
+      const refreshedToken = await this.refreshToken();
+      if (refreshedToken) {
+        return refreshedToken;
+      }
     } catch (error) {
       console.error('Failed to refresh token:', error);
-      return null;
     }
+
+    // Clear invalid tokens
+    this.signOut();
+    return null;
   }
 }
 

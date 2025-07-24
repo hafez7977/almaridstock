@@ -40,28 +40,40 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     const initializeAuth = async () => {
       try {
         await googleAuthService.initialize();
-        const isAuthenticated = googleAuthService.isAuthenticated();
         
-        if (isAuthenticated) {
-          // Try to get user info if already authenticated
-          const token = googleAuthService.getAccessToken();
-          if (token) {
-            // We'll need to store user info in localStorage or get it from token
-            const savedUser = localStorage.getItem('google_user');
-            if (savedUser) {
-              setAuthState({
-                isAuthenticated: true,
-                isLoading: false,
-                user: JSON.parse(savedUser),
-                error: null,
-              });
-            }
+        // Check if we have a valid token (not just any token)
+        const validToken = await googleAuthService.getValidAccessToken();
+        
+        if (validToken) {
+          // We have a valid token, check for saved user info
+          const savedUser = localStorage.getItem('google_user');
+          if (savedUser) {
+            setAuthState({
+              isAuthenticated: true,
+              isLoading: false,
+              user: JSON.parse(savedUser),
+              error: null,
+            });
+          } else {
+            // Token exists but no user info, clear auth state
+            await googleAuthService.signOut();
+            setAuthState({
+              isAuthenticated: false,
+              isLoading: false,
+              user: null,
+              error: null,
+            });
           }
         } else {
-          setAuthState(prev => ({
-            ...prev,
+          // No valid token, ensure we're signed out
+          await googleAuthService.signOut();
+          localStorage.removeItem('google_user');
+          setAuthState({
+            isAuthenticated: false,
             isLoading: false,
-          }));
+            user: null,
+            error: null,
+          });
         }
       } catch (error) {
         setAuthState({

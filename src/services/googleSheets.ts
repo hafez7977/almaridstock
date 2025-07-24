@@ -5,20 +5,27 @@ class GoogleSheetsService {
   private readonly baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
 
   private async makeRequest(url: string, options: RequestInit = {}, retryCount = 0): Promise<any> {
+    console.log('makeRequest called with URL:', url, 'retryCount:', retryCount);
+    
     const token = await googleAuthService.getValidAccessToken();
+    console.log('Access token obtained:', !!token, token ? `${token.substring(0, 10)}...` : 'null');
+    
     if (!token) {
+      console.error('No valid access token available');
       throw new Error('No access token available. Please sign in again.');
     }
 
-    console.log('Making request to:', url);
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    console.log('Request headers:', { ...headers, Authorization: `Bearer ${token.substring(0, 10)}...` });
 
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
 
     console.log('Response status:', response.status, response.statusText);
@@ -28,8 +35,10 @@ class GoogleSheetsService {
       try {
         const newToken = await googleAuthService.refreshToken();
         if (newToken) {
-          // Retry the request with the new token
+          console.log('Token refreshed successfully, retrying request...');
           return this.makeRequest(url, options, retryCount + 1);
+        } else {
+          console.error('Token refresh returned null');
         }
       } catch (error) {
         console.error('Token refresh failed:', error);
