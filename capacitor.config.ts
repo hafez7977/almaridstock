@@ -20,6 +20,9 @@ const config: CapacitorConfig = {
       layoutName: "launch_screen",
       useDialog: true,
     },
+    App: {
+      launchAutoHide: false
+    }
   },
   ios: {
     icon: "/lovable-uploads/1e2dfa0f-19d5-4b17-a983-a81789205f51.png"
