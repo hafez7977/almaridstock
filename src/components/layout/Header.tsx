@@ -19,7 +19,7 @@ export const Header = () => {
     return { available, booked, total };
   }, [stockCars, incomingCars, ksaCars]);
   return (
-    <header className="bg-background border-b border-border shadow-sm sticky top-0 z-50">
+    <header className="bg-background border-b border-border shadow-sm sticky top-0 z-50 pt-safe-top">
       <div className="w-full px-3 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-2">
           {/* Logo and Title - Mobile First Design */}
