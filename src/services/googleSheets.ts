@@ -5,45 +5,37 @@ class GoogleSheetsService {
   private readonly baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
 
   private async makeRequest(url: string, options: RequestInit = {}, retryCount = 0): Promise<any> {
-    console.log('makeRequest called with URL:', url, 'retryCount:', retryCount);
+    console.log('Making request to:', url);
     
     const token = await googleAuthService.getValidAccessToken();
-    console.log('Access token obtained:', !!token, token ? `${token.substring(0, 10)}...` : 'null');
     
     if (!token) {
       console.error('No valid access token available');
       throw new Error('No access token available. Please sign in again.');
     }
 
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    console.log('Request headers:', { ...headers, Authorization: `Bearer ${token.substring(0, 10)}...` });
-
     const response = await fetch(url, {
       ...options,
-      headers,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
     });
 
     console.log('Response status:', response.status, response.statusText);
 
-    if (response.status === 401 && retryCount === 0) {
-      console.log('Got 401, attempting token refresh...');
+    if (response.status === 401) {
+      console.log('Got 401 - authentication failed');
+      let errorMessage = 'Authentication failed. Please sign in again.';
       try {
-        const newToken = await googleAuthService.refreshToken();
-        if (newToken) {
-          console.log('Token refreshed successfully, retrying request...');
-          return this.makeRequest(url, options, retryCount + 1);
-        } else {
-          console.error('Token refresh returned null');
-        }
-      } catch (error) {
-        console.error('Token refresh failed:', error);
+        const error = await response.json();
+        errorMessage = `Google Sheets API error: ${error.error?.message || 'Invalid credentials'}`;
+        console.error('API Error details:', error);
+      } catch (e) {
+        console.error('Failed to parse error response:', e);
       }
-      throw new Error('Authentication failed. Please sign in again.');
+      throw new Error(errorMessage);
     }
 
     if (!response.ok) {

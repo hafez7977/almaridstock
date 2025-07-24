@@ -20,6 +20,7 @@ const GOOGLE_SCOPES = [
 
 class GoogleAuthService {
   private isInitialized = false;
+  private isRefreshing = false;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -177,37 +178,48 @@ class GoogleAuthService {
   }
 
   async refreshToken(): Promise<string | null> {
-    if (!this.isInitialized) {
-      await this.initialize();
+    // Prevent multiple simultaneous refresh attempts
+    if (this.isRefreshing) {
+      throw new Error('Token refresh already in progress');
     }
 
-    console.log('Attempting to refresh token...');
-    
-    const isNative = Capacitor.isNativePlatform();
-    
-    if (isNative) {
-      // Try to refresh token using Capacitor Google Auth
-      try {
-        const result = await GoogleAuth.refresh();
-        if (result.accessToken) {
-          const expiresAt = Date.now() + (3600 * 1000); // 1 hour default
-          localStorage.setItem('google_access_token', result.accessToken);
-          localStorage.setItem('google_token_expires_at', expiresAt.toString());
-          return result.accessToken;
-        }
-      } catch (error) {
-        console.error('Failed to refresh mobile token:', error);
-      }
-      return null;
-    }
+    this.isRefreshing = true;
 
-    // For web, we'd need to re-authenticate
     try {
-      const user = await this.signIn();
-      return this.getAccessToken();
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      console.log('Attempting to refresh token...');
+      
+      const isNative = Capacitor.isNativePlatform();
+      
+      if (isNative) {
+        // Try to refresh token using Capacitor Google Auth
+        try {
+          const result = await GoogleAuth.refresh();
+          if (result.accessToken) {
+            const expiresAt = Date.now() + (3600 * 1000); // 1 hour default
+            localStorage.setItem('google_access_token', result.accessToken);
+            localStorage.setItem('google_token_expires_at', expiresAt.toString());
+            return result.accessToken;
+          }
+        } catch (error) {
+          console.error('Failed to refresh mobile token:', error);
+        }
+        return null;
+      }
+
+      // For web, automatic refresh is not supported
+      console.log('Web platform detected - automatic token refresh not supported');
+      throw new Error('Token expired - user must sign in again');
     } catch (error) {
       console.error('Failed to refresh token:', error);
-      return null;
+      // Clear invalid tokens on failure
+      this.signOut();
+      throw error;
+    } finally {
+      this.isRefreshing = false;
     }
   }
 
