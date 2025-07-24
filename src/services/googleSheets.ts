@@ -1,5 +1,5 @@
 import { Car, LogEntry } from '@/types/car';
-import { googleAuthService } from './googleAuth';
+import { authService } from './auth';
 
 class GoogleSheetsService {
   private readonly baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -7,7 +7,7 @@ class GoogleSheetsService {
   private async makeRequest(url: string, options: RequestInit = {}, retryCount = 0): Promise<any> {
     console.log('Making request to:', url);
     
-    const token = await googleAuthService.getValidAccessToken();
+    const token = authService.getAccessToken();
     
     if (!token) {
       console.error('No valid access token available');
