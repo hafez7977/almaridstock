@@ -1,4 +1,5 @@
 import { GoogleUser } from '@/types/google-sheets';
+import { Capacitor } from '@capacitor/core';
 
 // Capacitor Web Google Auth (works in both web and native)
 declare global {
@@ -66,22 +67,11 @@ class GoogleAuthService {
 
     console.log('Starting Google sign-in process...');
 
-    const isNative = window.location.protocol === 'capacitor:';
+    const isNative = Capacitor.isNativePlatform();
     
     if (isNative) {
-      // Native mock implementation
-      const mockUser = {
-        email: 'admin@almaridmotors.com',
-        name: 'Al Marid Admin',
-        picture: '',
-      };
-
-      // Store mock token with longer expiration
-      const expiresAt = Date.now() + (24 * 3600 * 1000); // 24 hours
-      localStorage.setItem('google_access_token', 'native_mock_token');
-      localStorage.setItem('google_token_expires_at', expiresAt.toString());
-
-      return mockUser;
+      // For mobile, show message that Google authentication needs to be set up
+      throw new Error('Mobile Google authentication is not yet configured. Please use the web version for now or contact support to set up mobile authentication.');
     }
 
     // Web implementation
@@ -166,14 +156,11 @@ class GoogleAuthService {
 
     console.log('Attempting to refresh token...');
     
-    const isNative = window.location.protocol === 'capacitor:';
+    const isNative = Capacitor.isNativePlatform();
     
     if (isNative) {
-      // Native mock refresh
-      const expiresAt = Date.now() + (24 * 3600 * 1000);
-      localStorage.setItem('google_access_token', 'native_mock_token');
-      localStorage.setItem('google_token_expires_at', expiresAt.toString());
-      return 'native_mock_token';
+      // No token refresh on mobile without proper auth
+      return null;
     }
 
     // For web, we'd need to re-authenticate
