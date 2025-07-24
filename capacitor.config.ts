@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85',
   appName: 'almaridstock',
   webDir: 'dist',
-  server: {
-    url: 'https://c3feb9cc-1fe0-4d03-8d71-13be0d8bcf85.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
