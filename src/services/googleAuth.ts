@@ -78,19 +78,14 @@ class GoogleAuthService {
         // This is expected in OAuth flow - the user will be redirected and come back
         console.log('No immediate session - OAuth redirect in progress');
         
-        // For mobile environments, we should not throw an error here as the auth state listener will handle it
-        const isCapacitor = window.location.protocol === 'capacitor:';
-        if (isCapacitor) {
-          console.log('Mobile environment detected - auth state listener will handle the callback');
-          // Return a placeholder that won't be used since the auth state listener will update the state
-          return {
-            email: '',
-            name: 'OAuth in progress...',
-            picture: ''
-          };
-        }
-        
-        throw new Error('OAuth redirect in progress. Please complete sign-in in the opened window.');
+        // Don't throw an error here - let the auth state listener handle the callback
+        console.log('OAuth initiated successfully - auth state listener will handle the callback');
+        // Return a placeholder that won't be used since the auth state listener will update the state
+        return {
+          email: '',
+          name: 'OAuth in progress...',
+          picture: ''
+        };
       }
 
       console.log('Session found after OAuth:', !!session);
