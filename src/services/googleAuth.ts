@@ -37,14 +37,31 @@ class GoogleAuthService {
   private loadGoogleScript(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (window.google?.accounts) {
+        console.log('Google script already loaded');
         resolve();
         return;
       }
 
+      console.log('Loading Google script from:', 'https://accounts.google.com/gsi/client');
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Google script'));
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        console.log('Google script loaded successfully');
+        // Wait a bit for the API to initialize
+        setTimeout(() => {
+          if (window.google?.accounts) {
+            resolve();
+          } else {
+            reject(new Error('Google API not available after script load'));
+          }
+        }, 100);
+      };
+      script.onerror = (error) => {
+        console.error('Failed to load Google script:', error);
+        reject(new Error('Failed to load Google script - check network connection or script URL'));
+      };
       document.head.appendChild(script);
     });
   }
