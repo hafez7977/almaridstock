@@ -21,8 +21,8 @@ export const Header = () => {
   return (
     <header className="bg-background border-b border-border shadow-sm sticky top-0 z-50 pt-safe-top">
       <div className="w-full px-3 sm:px-6 py-3">
-        <div className="flex items-center justify-between gap-2">
-          {/* Logo and Title - Mobile First Design */}
+        <div className="flex items-center gap-2">
+          {/* Logo and Title */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="p-1.5 bg-primary/10 rounded-lg flex-shrink-0">
               <img 
@@ -39,8 +39,8 @@ export const Header = () => {
             </div>
           </div>
           
-          {/* Car Stats - Condensed for Mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-muted/50 rounded-lg border flex-shrink-0">
+          {/* Car Stats - Centered */}
+          <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-muted/50 rounded-lg border absolute left-1/2 transform -translate-x-1/2">
             <div className="text-center">
               <div className="text-sm sm:text-base font-bold text-emerald-600">
                 {isLoading ? '-' : carStats.available}
@@ -61,7 +61,7 @@ export const Header = () => {
           </div>
           
           {/* Actions */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-1 justify-end">
             <ThemeToggle />
             <SettingsMenu />
           </div>
