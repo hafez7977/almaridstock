@@ -116,7 +116,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
 
     // Define headers (removed SN column)
     const headers = [
-      '#', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Spec Code',
+      '#', 'Status', 'Name', 'Model', 'Description', 'Barcode', 'Chassis No', 'Spec Code',
       'Color Ext', 'Color Int', 'Branch', 'Customer', 'SP', 'AMPI #', 
       'Received Date', 'Location', 'Aging (Days)'
     ];
@@ -149,6 +149,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         car.status,
         car.name || '',
         car.model || '',
+        car.description || '',
         car.barCode || '',
         car.chassisNo || '',
         car.specCode || '',
@@ -199,8 +200,8 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         }
       });
       
-      // Special handling for barcode column (index 4)
-      if (index === 4) { // Barcode column
+      // Special handling for barcode column (index 5, after adding description)
+      if (index === 5) { // Barcode column
         column.width = Math.max(maxLength + 3, 15); // Ensure minimum 15 width for barcodes
       } else {
         // Set column width with some padding for other columns
