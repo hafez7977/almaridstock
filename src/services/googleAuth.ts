@@ -1,6 +1,4 @@
 import { GoogleUser } from '@/types/google-sheets';
-import { Capacitor } from '@capacitor/core';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 // Capacitor Web Google Auth (works in both web and native)
 declare global {
@@ -26,25 +24,7 @@ class GoogleAuthService {
     if (this.isInitialized) return;
 
     try {
-      console.log('Initializing Google Auth...');
-      
-      // Check if running in native context
-      const isNative = Capacitor.isNativePlatform();
-      console.log('Is native platform:', isNative);
-      
-      if (isNative) {
-        // Initialize Capacitor Google Auth
-        await GoogleAuth.initialize({
-          clientId: GOOGLE_CLIENT_ID,
-          scopes: ['profile', 'email', 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly'],
-          grantOfflineAccess: true,
-        });
-        this.isInitialized = true;
-        return;
-      }
-
-      // Web implementation
-      console.log('Loading Google script for web...');
+      console.log('Initializing Google Auth for web...');
       await this.loadGoogleScript();
       console.log('Google script loaded successfully');
       this.isInitialized = true;
@@ -74,33 +54,7 @@ class GoogleAuthService {
       await this.initialize();
     }
 
-    console.log('Starting Google sign-in process...');
-
-    const isNative = Capacitor.isNativePlatform();
-    
-    if (isNative) {
-      // Use Capacitor Google Auth for mobile
-      try {
-        const result = await GoogleAuth.signIn();
-        console.log('Mobile Google sign-in successful:', result);
-        
-        // Store the access token
-        if (result.authentication?.accessToken) {
-          const expiresAt = Date.now() + (3600 * 1000); // 1 hour default
-          localStorage.setItem('google_access_token', result.authentication.accessToken);
-          localStorage.setItem('google_token_expires_at', expiresAt.toString());
-        }
-        
-        return {
-          email: result.email,
-          name: result.name,
-          picture: result.imageUrl || '',
-        };
-      } catch (error) {
-        console.error('Mobile Google Auth error:', error);
-        throw new Error(`Mobile Google authentication failed: ${error}`);
-      }
-    }
+    console.log('Starting Google sign-in process for web...');
 
     // Web implementation
     return new Promise((resolve, reject) => {
@@ -199,24 +153,6 @@ class GoogleAuthService {
 
       console.log('Attempting to refresh token...');
       
-      const isNative = Capacitor.isNativePlatform();
-      
-      if (isNative) {
-        // Try to refresh token using Capacitor Google Auth
-        try {
-          const result = await GoogleAuth.refresh();
-          if (result.accessToken) {
-            const expiresAt = Date.now() + (3600 * 1000); // 1 hour default
-            localStorage.setItem('google_access_token', result.accessToken);
-            localStorage.setItem('google_token_expires_at', expiresAt.toString());
-            return result.accessToken;
-          }
-        } catch (error) {
-          console.error('Failed to refresh mobile token:', error);
-        }
-        return null;
-      }
-
       // For web, automatic refresh is not supported
       console.log('Web platform detected - automatic token refresh not supported');
       throw new Error('Token expired - user must sign in again');
