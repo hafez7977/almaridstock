@@ -247,6 +247,15 @@ class GoogleSheetsService {
             car.specCode = value;
             break;
           case 'description':
+          case 'desc':
+          case 'details':
+          case 'specs':
+          case 'specification':
+          case 'info':
+          case 'notes':
+          case 'comment':
+          case 'comments':
+          case 'remarks':
             car.description = value;
             break;
           case 'colourext':
@@ -265,6 +274,16 @@ class GoogleSheetsService {
           case 'clr ext':
           case 'clr_ext':
           case 'colorext':
+          case 'exterior':
+          case 'ext':
+          case 'outside color':
+          case 'outside colour':
+          case 'outer color':
+          case 'outer colour':
+          case 'body color':
+          case 'body colour':
+          case 'paint color':
+          case 'paint colour':
             car.colourExt = value;
             console.log('Found colourExt:', value, 'from header:', header);
             break;
@@ -283,6 +302,16 @@ class GoogleSheetsService {
           case 'clr int':
           case 'clr_int':
           case 'colorint':
+          case 'interior':
+          case 'int':
+          case 'inside color':
+          case 'inside colour':
+          case 'inner color':
+          case 'inner colour':
+          case 'cabin color':
+          case 'cabin colour':
+          case 'trim color':
+          case 'trim colour':
             car.colourInt = value;
             console.log('Found colourInt:', value, 'from header:', header);
             break;
