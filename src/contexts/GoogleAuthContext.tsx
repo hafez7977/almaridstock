@@ -78,56 +78,40 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
     
     try {
-      // For mobile platforms, use in-app browser for better UX
-      if (Capacitor.isNativePlatform()) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-            },
-            redirectTo: 'app.alamaridstock://login-callback/'
-          }
+      // Use the current window location as redirect URL for web
+      const redirectUrl = Capacitor.isNativePlatform() 
+        ? 'app.alamaridstock://login-callback/'
+        : window.location.origin;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          redirectTo: redirectUrl
+        }
+      });
+
+      if (error) {
+        console.error('Google OAuth error:', error);
+        setIsLoading(false);
+        throw error;
+      }
+
+      // For native platforms, open in-app browser
+      if (Capacitor.isNativePlatform() && data.url) {
+        console.log('Opening OAuth URL in in-app browser:', data.url);
+        await Browser.open({
+          url: data.url,
+          presentationStyle: 'popover',
+          windowName: '_self'
         });
-
-        if (error) {
-          console.error('Google OAuth error:', error);
-          setIsLoading(false);
-          throw error;
-        }
-
-        // Open the OAuth URL in the in-app browser
-        if (data.url) {
-          await Browser.open({
-            url: data.url,
-            presentationStyle: 'popover', // iOS specific: better integration
-            windowName: '_self'
-          });
-        }
-      } else {
-        // Web browser flow
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-            }
-          }
-        });
-
-        if (error) {
-          console.error('Google OAuth error:', error);
-          setIsLoading(false);
-          throw error;
-        }
       }
 
       console.log('OAuth sign-in initiated successfully');
-      // Don't set loading to false here - let the auth state change handle it
     } catch (error) {
       console.error('Sign-in error:', error);
       setIsLoading(false);
