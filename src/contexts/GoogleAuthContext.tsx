@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Browser } from '@capacitor/browser';
-import { Capacitor } from '@capacitor/core';
 
 interface GoogleAuthContextType {
   user: User | null;
@@ -39,43 +37,16 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   });
 
   useEffect(() => {
-    console.log('Setting up auth state listener...');
+    console.log('🔄 Setting up auth state listener...');
     
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change:', event, !!session);
-        console.log('Session details:', {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          hasProviderToken: !!session?.provider_token,
-          provider: session?.user?.app_metadata?.provider,
-          userEmail: session?.user?.email
-        });
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-        
-        // Store Google access token if available
-        if (session?.provider_token) {
-          localStorage.setItem('google_access_token', session.provider_token);
-          console.log('Stored Google provider token:', session.provider_token.substring(0, 20) + '...');
-        }
-        
-        // Close browser if we're on mobile and got a successful session
-        if (Capacitor.isNativePlatform() && session && event === 'SIGNED_IN') {
-          Browser.close().catch(e => console.log('Browser already closed or not open'));
-        }
-      }
-    );
-
-    // THEN check for existing session
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('Initial session check:', !!session, error);
-      if (error) {
-        console.error('Session retrieval error:', error);
-      }
+      console.log('📍 Initial session:', { 
+        hasSession: !!session, 
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        error: error?.message 
+      });
       
       setSession(session);
       setUser(session?.user ?? null);
@@ -83,79 +54,72 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       
       if (session?.provider_token) {
         localStorage.setItem('google_access_token', session.provider_token);
-        console.log('Stored Google provider token from initial session');
+        console.log('✅ Stored Google provider token');
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('🔔 Auth state change:', { 
+          event, 
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email 
+        });
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+        
+        if (session?.provider_token) {
+          localStorage.setItem('google_access_token', session.provider_token);
+          console.log('✅ Updated Google provider token');
+        } else {
+          localStorage.removeItem('google_access_token');
+          console.log('🗑️ Removed Google provider token');
+        }
+      }
+    );
+
+    return () => {
+      console.log('🔌 Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async () => {
-    console.log('Sign-in button clicked');
+    console.log('🚀 Starting Google sign-in...');
     setIsLoading(true);
     
     try {
-      // Different approach for mobile vs web
-      if (Capacitor.isNativePlatform()) {
-        // Mobile: Use app scheme redirect
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-            },
-            redirectTo: 'app.alamaridstock://login-callback/'
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
           }
-        });
-
-        if (error) {
-          console.error('Mobile OAuth error:', error);
-          setIsLoading(false);
-          throw error;
         }
+      });
 
-        if (data.url) {
-          console.log('Opening OAuth URL in in-app browser:', data.url);
-          await Browser.open({
-            url: data.url,
-            presentationStyle: 'popover',
-            windowName: '_self'
-          });
-        }
-      } else {
-        // Web: Use current domain redirect
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-            },
-            redirectTo: window.location.origin + window.location.pathname
-          }
-        });
-
-        if (error) {
-          console.error('Web OAuth error:', error);
-          setIsLoading(false);
-          throw error;
-        }
-        
-        console.log('Web OAuth initiated, redirecting...');
+      if (error) {
+        console.error('❌ OAuth error:', error);
+        setIsLoading(false);
+        throw error;
       }
 
-      console.log('OAuth sign-in initiated successfully');
+      console.log('✅ OAuth initiated successfully');
     } catch (error) {
-      console.error('Sign-in error:', error);
+      console.error('💥 Sign-in error:', error);
       setIsLoading(false);
       throw error;
     }
   };
 
   const signOut = async () => {
+    console.log('👋 Signing out...');
     setIsLoading(true);
     
     try {
@@ -164,24 +128,23 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Sign out error:', error);
+        console.error('❌ Sign out error:', error);
         throw error;
       }
       
-      console.log('Signed out successfully');
+      console.log('✅ Signed out successfully');
     } catch (error) {
-      console.error('Sign-out error:', error);
+      console.error('💥 Sign-out error:', error);
       setIsLoading(false);
       throw error;
     }
   };
 
   const setSpreadsheetId = (id: string) => {
-    // Remove trailing slash to prevent API URL issues
     const cleanId = id.replace(/\/$/, '');
     setSpreadsheetIdState(cleanId);
-    // Persist to localStorage
     localStorage.setItem('google_spreadsheet_id', cleanId);
+    console.log('📋 Updated spreadsheet ID:', cleanId);
   };
 
   const value: GoogleAuthContextType = {
@@ -194,6 +157,13 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setSpreadsheetId,
     spreadsheetId,
   };
+
+  console.log('🔍 Current auth state:', {
+    isAuthenticated: !!user,
+    isLoading,
+    hasSession: !!session,
+    userEmail: user?.email
+  });
 
   return (
     <GoogleAuthContext.Provider value={value}>
