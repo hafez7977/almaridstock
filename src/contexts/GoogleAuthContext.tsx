@@ -45,6 +45,14 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state change:', event, !!session);
+        console.log('Session details:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          hasProviderToken: !!session?.provider_token,
+          provider: session?.user?.app_metadata?.provider,
+          userEmail: session?.user?.email
+        });
+        
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
@@ -52,14 +60,23 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         // Store Google access token if available
         if (session?.provider_token) {
           localStorage.setItem('google_access_token', session.provider_token);
-          console.log('Stored Google provider token');
+          console.log('Stored Google provider token:', session.provider_token.substring(0, 20) + '...');
+        }
+        
+        // Close browser if we're on mobile and got a successful session
+        if (Capacitor.isNativePlatform() && session && event === 'SIGNED_IN') {
+          Browser.close().catch(e => console.log('Browser already closed or not open'));
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', !!session);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('Initial session check:', !!session, error);
+      if (error) {
+        console.error('Session retrieval error:', error);
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -78,37 +95,56 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
     
     try {
-      // Use the current window location as redirect URL for web
-      const redirectUrl = Capacitor.isNativePlatform() 
-        ? 'app.alamaridstock://login-callback/'
-        : window.location.origin;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          redirectTo: redirectUrl
-        }
-      });
-
-      if (error) {
-        console.error('Google OAuth error:', error);
-        setIsLoading(false);
-        throw error;
-      }
-
-      // For native platforms, open in-app browser
-      if (Capacitor.isNativePlatform() && data.url) {
-        console.log('Opening OAuth URL in in-app browser:', data.url);
-        await Browser.open({
-          url: data.url,
-          presentationStyle: 'popover',
-          windowName: '_self'
+      // Different approach for mobile vs web
+      if (Capacitor.isNativePlatform()) {
+        // Mobile: Use app scheme redirect
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+            redirectTo: 'app.alamaridstock://login-callback/'
+          }
         });
+
+        if (error) {
+          console.error('Mobile OAuth error:', error);
+          setIsLoading(false);
+          throw error;
+        }
+
+        if (data.url) {
+          console.log('Opening OAuth URL in in-app browser:', data.url);
+          await Browser.open({
+            url: data.url,
+            presentationStyle: 'popover',
+            windowName: '_self'
+          });
+        }
+      } else {
+        // Web: Use current domain redirect
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+            redirectTo: window.location.origin + window.location.pathname
+          }
+        });
+
+        if (error) {
+          console.error('Web OAuth error:', error);
+          setIsLoading(false);
+          throw error;
+        }
+        
+        console.log('Web OAuth initiated, redirecting...');
       }
 
       console.log('OAuth sign-in initiated successfully');
