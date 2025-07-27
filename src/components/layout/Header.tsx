@@ -43,8 +43,8 @@ export const Header = () => {
             </div>
           </div>
           
-          {/* Car Stats - Centered (Admin and Authenticated Only) */}
-          {isAdmin && isAuthenticated && (
+          {/* Car Stats - Centered (Admin and Authenticated with Data Only) */}
+          {isAdmin && isAuthenticated && (stockCars || incomingCars || ksaCars) && (
             <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-muted/50 rounded-lg border absolute left-1/2 transform -translate-x-1/2">
               <div className="text-center">
                 <div className="text-sm sm:text-base font-bold text-emerald-600">
