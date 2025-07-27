@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Menu
 } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
 
 interface NavigationProps {
   activeTab: string;
@@ -19,6 +20,7 @@ interface NavigationProps {
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAdmin } = useAdmin();
 
   const tabs = [
     { id: 'stock', label: 'Stock', icon: Package },
@@ -32,28 +34,30 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
 
   const NavigationContent = () => (
     <nav className="space-y-2">
-      {tabs.map((tab) => {
-        const Icon = tab.icon;
-        return (
-          <Button
-            key={tab.id}
-            variant={activeTab === tab.id ? "default" : "ghost"}
-            className={cn(
-              "w-full justify-start gap-3 px-3 py-3 text-left",
-              activeTab === tab.id
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            )}
-            onClick={() => {
-              onTabChange(tab.id);
-              setIsOpen(false); // Close mobile menu after selection
-            }}
-          >
-            <Icon className="h-4 w-4" />
-            {tab.label}
-          </Button>
-        );
-      })}
+      {tabs
+        .filter(tab => tab.id !== 'reports' || isAdmin) // Only show reports tab to admins
+        .map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <Button
+              key={tab.id}
+              variant={activeTab === tab.id ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start gap-3 px-3 py-3 text-left",
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+              )}
+              onClick={() => {
+                onTabChange(tab.id);
+                setIsOpen(false); // Close mobile menu after selection
+              }}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </Button>
+          );
+        })}
     </nav>
   );
 

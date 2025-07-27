@@ -46,6 +46,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LogEntry } from '@/types/car';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { Calendar, FileText, AlertTriangle, BarChart3, Loader2, Download } from 'lucide-react';
 import { MultiFilters, filterCars, sortCarsWithPriority, getAvailableCars, getBookedCars, isAvailable, isBooked } from '@/utils/carFilters';
@@ -68,6 +69,7 @@ const Index = () => {
   });
 
   const { isAuthenticated, spreadsheetId } = useGoogleAuth();
+  const { isAdmin } = useAdmin();
   const { 
     stockCars, 
     incomingCars, 
@@ -306,6 +308,16 @@ const Index = () => {
         );
       
       case 'reports':
+        // Only allow admins to access reports
+        if (!isAdmin) {
+          return (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">Access denied. Admin privileges required.</p>
+              </CardContent>
+            </Card>
+          );
+        }
         return (
           <Card>
             <CardHeader>
