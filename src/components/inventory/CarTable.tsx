@@ -22,9 +22,10 @@ interface CarTableProps {
   cars: Car[];
   title: string;
   onCarUpdate: (car: Car) => void;
+  isKsaTab?: boolean;
 }
 
-export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
+export const CarTable = ({ cars, title, onCarUpdate, isKsaTab = false }: CarTableProps) => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const { toast } = useToast();
 
@@ -99,10 +100,21 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, car?: Car, isKsaTab?: boolean) => {
     if (!status) return <Badge variant="outline">-</Badge>;
     
     const cleanStatus = status.toLowerCase().trim();
+    
+    // Special coloring for KSA tab incoming cars (except ksa-76-april)
+    if (isKsaTab && car?.place?.toLowerCase() === 'incoming' && 
+        !car.barCode?.toLowerCase().includes('ksa-76-april') && 
+        cleanStatus.includes('available')) {
+      return (
+        <Badge className="bg-purple text-purple-foreground">
+          {status}
+        </Badge>
+      );
+    }
     
     // Check for Available (with misspellings)
     if (cleanStatus === 'available' || 
@@ -238,6 +250,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                   car={car}
                   onViewDetails={setSelectedCar}
                   onSpecCodeClick={handleSpecCodeClick}
+                  isKsaTab={isKsaTab}
                 />
               ))}
             </div>
@@ -288,7 +301,7 @@ export const CarTable = ({ cars, title, onCarUpdate }: CarTableProps) => {
                 return (
                 <TableRow key={car.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">{car.sn}</TableCell>
-                  <TableCell>{getStatusBadge(car.status)}</TableCell>
+                  <TableCell>{getStatusBadge(car.status, car, isKsaTab)}</TableCell>
                   <TableCell className="font-medium">
                     <div>
                       <div className="font-medium">{car.name}</div>

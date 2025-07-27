@@ -109,7 +109,7 @@ const Index = () => {
     const filtered = filterCars(currentCars, filters);
     
     // Sort with Available and Booked first
-    return sortCarsWithPriority(filtered);
+    return sortCarsWithPriority(filtered, activeTab);
   }, [stockCars, incomingCars, ksaCars, activeTab, filters]);
 
   // Cars that need follow up (Booked status and aging > 3 days)
@@ -198,6 +198,7 @@ const Index = () => {
                 cars={filteredCars}
                 title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Inventory`}
                 onCarUpdate={handleCarUpdate}
+                isKsaTab={activeTab === 'ksa'}
               />
             )}
           </div>

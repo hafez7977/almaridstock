@@ -120,22 +120,48 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
   });
 };
 
-export const sortCarsWithPriority = (cars: Car[]): Car[] => {
+export const sortCarsWithPriority = (cars: Car[], tabType?: string): Car[] => {
   return [...cars].sort((a, b) => {
-    const aPriority = getStatusPriority(a.status);
-    const bPriority = getStatusPriority(b.status);
-    
-    if (aPriority !== bPriority) {
-      return aPriority - bPriority;
-    }
-    
-    // Within Available cars (priority 1), put Toyota at the end
-    if (aPriority === 1) {
-      const aIsToyota = a.name?.toLowerCase().includes('toyota') || false;
-      const bIsToyota = b.name?.toLowerCase().includes('toyota') || false;
+    // For KSA tab, apply special logic for incoming cars
+    if (tabType === 'ksa') {
+      const aIsIncoming = a.place?.toLowerCase() === 'incoming';
+      const bIsIncoming = b.place?.toLowerCase() === 'incoming';
+      const aIsKsa76April = a.barCode?.toLowerCase().includes('ksa-76-april');
+      const bIsKsa76April = b.barCode?.toLowerCase().includes('ksa-76-april');
       
-      if (aIsToyota && !bIsToyota) return 1;  // Toyota goes after non-Toyota
-      if (!aIsToyota && bIsToyota) return -1; // Non-Toyota goes before Toyota
+      // Special handling for incoming cars (treat as booked for sorting)
+      let aEffectiveStatus = a.status;
+      let bEffectiveStatus = b.status;
+      
+      if (aIsIncoming && !aIsKsa76April && isAvailable(a.status)) {
+        aEffectiveStatus = 'Booked'; // Treat as booked for sorting
+      }
+      if (bIsIncoming && !bIsKsa76April && isAvailable(b.status)) {
+        bEffectiveStatus = 'Booked'; // Treat as booked for sorting
+      }
+      
+      const aPriority = getStatusPriority(aEffectiveStatus);
+      const bPriority = getStatusPriority(bEffectiveStatus);
+      
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+    } else {
+      const aPriority = getStatusPriority(a.status);
+      const bPriority = getStatusPriority(b.status);
+      
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+      
+      // Within Available cars (priority 1), put Toyota at the end
+      if (aPriority === 1) {
+        const aIsToyota = a.name?.toLowerCase().includes('toyota') || false;
+        const bIsToyota = b.name?.toLowerCase().includes('toyota') || false;
+        
+        if (aIsToyota && !bIsToyota) return 1;  // Toyota goes after non-Toyota
+        if (!aIsToyota && bIsToyota) return -1; // Non-Toyota goes before Toyota
+      }
     }
     
     // Sort by name first (group same names together)

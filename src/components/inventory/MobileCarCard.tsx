@@ -9,11 +9,20 @@ interface MobileCarCardProps {
   car: Car;
   onViewDetails: (car: Car) => void;
   onSpecCodeClick?: (specCode: string) => void;
+  isKsaTab?: boolean;
 }
 
-export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick }: MobileCarCardProps) => {
+export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = false }: MobileCarCardProps) => {
   const getStatusColor = (status: string) => {
     const statusLower = status.toLowerCase();
+    
+    // Special coloring for KSA tab incoming cars (except ksa-76-april)
+    if (isKsaTab && car.place?.toLowerCase() === 'incoming' && 
+        !car.barCode?.toLowerCase().includes('ksa-76-april') && 
+        statusLower.includes('available')) {
+      return 'bg-purple text-purple-foreground';
+    }
+    
     if (statusLower.includes('available')) return 'bg-light-green text-light-green-foreground';
     if (statusLower.includes('booked')) return 'bg-yellow text-yellow-foreground';
     if (statusLower.includes('sold')) return 'bg-dark-blue text-dark-blue-foreground';
