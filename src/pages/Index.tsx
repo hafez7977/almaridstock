@@ -5,6 +5,7 @@ import { CarTable } from '@/components/inventory/CarTable';
 import { FilterBar } from '@/components/inventory/FilterBar';
 import { SpecsUpload } from '@/components/inventory/SpecsUpload';
 import { Car } from '@/types/car';
+import { excelExportService } from '@/services/excelExport';
 const generateCSV = (cars: Car[]) => {
   const headers = ['SN', 'Status', 'Name', 'Model', 'Barcode', 'Chassis No', 'Color Ext', 'Color Int', 'Branch', 'Customer', 'Received Date', 'Aging'];
   const csvRows = [
@@ -46,7 +47,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LogEntry } from '@/types/car';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
-import { Calendar, FileText, AlertTriangle, BarChart3, Loader2 } from 'lucide-react';
+import { Calendar, FileText, AlertTriangle, BarChart3, Loader2, Download } from 'lucide-react';
 import { MultiFilters, filterCars, sortCarsWithPriority, getAvailableCars, getBookedCars, isAvailable, isBooked } from '@/utils/carFilters';
 
 const Index = () => {
@@ -87,6 +88,12 @@ const Index = () => {
       ksaCars.find(car => car.id === updatedCar.id);
     
     await updateCar(updatedCar, sheetName, originalCar?.status);
+  };
+
+  const handleExportToExcel = async () => {
+    const tabName = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+    const filename = excelExportService.generateFilename(tabName, filters);
+    await excelExportService.exportCarsToExcel(filteredCars, filename, tabName);
   };
 
   const filteredCars = useMemo(() => {
@@ -146,16 +153,32 @@ const Index = () => {
       case 'ksa':
         return (
           <div>
-            {/* Only show FilterBar when we have data loaded */}
+            {/* Only show FilterBar and Export when we have data loaded */}
             {!isLoading && (
-              <FilterBar 
-                cars={
-                  activeTab === 'stock' ? stockCars || [] :
-                  activeTab === 'incoming' ? incomingCars || [] :
-                  ksaCars || []
-                } 
-                onFilterChange={setFilters} 
-              />
+              <div className="space-y-4">
+                <FilterBar 
+                  cars={
+                    activeTab === 'stock' ? stockCars || [] :
+                    activeTab === 'incoming' ? incomingCars || [] :
+                    ksaCars || []
+                  } 
+                  onFilterChange={setFilters} 
+                />
+                
+                {/* Export to Excel Button */}
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleExportToExcel}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    disabled={filteredCars.length === 0}
+                  >
+                    <Download className="h-4 w-4" />
+                    Export to Excel ({filteredCars.length} cars)
+                  </Button>
+                </div>
+              </div>
             )}
             {/* Show loading state while data is loading */}
             {isLoading ? (
