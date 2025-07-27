@@ -544,8 +544,8 @@ const Index = () => {
             <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
           
-          {/* Content area with mobile-optimized padding */}
-          <div className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6">
+          {/* Content area with improved mobile margins */}
+          <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 max-w-full">
             {renderContent()}
           </div>
         </main>
