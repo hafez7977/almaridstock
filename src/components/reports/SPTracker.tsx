@@ -47,9 +47,18 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
     
     // Only count deals that have a valid deal ID and are not empty
     if (deal && deal !== '' && deal !== 'N/A' && deal !== 'n/a' && deal !== 'null') {
-      if (status === 'booked') {
+      // Count as BOOKED: booked, received advance, partial payment
+      if (status === 'booked' || 
+          status === 'received advance' || 
+          status === 'partial payment' ||
+          status === 'recived advance' || // handle typos
+          status === 'recieved advance') {
         acc[sp].bookedDeals.add(deal);
-      } else if (status === 'sold') {
+      } 
+      // Count as SOLD: everything else except available/unreceived
+      else if (status !== 'available' && 
+               status !== 'unreceived' && 
+               status !== '') {
         acc[sp].soldDeals.add(deal);
       }
     }
