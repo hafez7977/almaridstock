@@ -39,33 +39,26 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   useEffect(() => {
     console.log('🔄 Setting up auth state listener...');
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('📍 Initial session:', { 
-        hasSession: !!session, 
-        hasUser: !!session?.user,
-        userEmail: session?.user?.email,
-        error: error?.message 
-      });
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-      
-      if (session?.provider_token) {
-        localStorage.setItem('google_access_token', session.provider_token);
-        console.log('✅ Stored Google provider token');
-      }
-    });
+    // Check if there's an access token in the URL hash (OAuth callback)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    
+    if (accessToken) {
+      console.log('🔗 Found OAuth tokens in URL hash, processing...');
+      // Clear the hash from URL for security
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
-    // Listen for auth changes
+    // Listen for auth changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('🔔 Auth state change:', { 
           event, 
           hasSession: !!session,
           hasUser: !!session?.user,
-          userEmail: session?.user?.email 
+          userEmail: session?.user?.email,
+          providerToken: !!session?.provider_token 
         });
         
         setSession(session);
@@ -81,6 +74,32 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         }
       }
     );
+
+    // THEN get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📍 Initial session check:', { 
+        hasSession: !!session, 
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        error: error?.message,
+        providerToken: !!session?.provider_token
+      });
+      
+      if (!session && (accessToken || refreshToken)) {
+        console.log('🔄 No session found but have tokens, attempting to set session...');
+        // Let onAuthStateChange handle the session update
+        return;
+      }
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+      
+      if (session?.provider_token) {
+        localStorage.setItem('google_access_token', session.provider_token);
+        console.log('✅ Stored Google provider token from initial session');
+      }
+    });
 
     return () => {
       console.log('🔌 Cleaning up auth listener');
