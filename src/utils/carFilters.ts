@@ -4,12 +4,15 @@ export interface MultiFilters {
   search: string;
   statuses: string[];
   models: string[]; // This will now be car names
-  years: string[];  // This will be the model/year data
-  branches: string[];
-  colorsExt: string[];
   barcodes: string[];
+  descriptions: string[];
+  years: string[];  // This will be the model/year data
+  colorsExt: string[];
+  colorsInt: string[]; // Interior colors
   specCodes: string[];
+  branches: string[];
   sp: string[];
+  deals: string[]; // Deal codes
 }
 
 // Helper functions to check status types with misspelling tolerance
@@ -99,16 +102,21 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
       }
     });
     
-    // Other filters - models now filters by car names, years filters by model data
+    // All filter checks in the new order: status, name, barcode, description, year, color, interior, spec code, branch, sp, deal
     const matchesModel = filters.models.length === 0 || filters.models.includes(car.name || '');
-    const matchesYear = filters.years.length === 0 || filters.years.includes(car.model || '');
-    const matchesBranch = filters.branches.length === 0 || filters.branches.includes(car.branch || '');
-    const matchesColor = filters.colorsExt.length === 0 || filters.colorsExt.includes(car.colourExt || '');
     const matchesBarcode = filters.barcodes.length === 0 || filters.barcodes.includes(car.barCode || '');
+    const matchesDescription = filters.descriptions.length === 0 || filters.descriptions.includes(car.description || '');
+    const matchesYear = filters.years.length === 0 || filters.years.includes(car.model || '');
+    const matchesColor = filters.colorsExt.length === 0 || filters.colorsExt.includes(car.colourExt || '');
+    const matchesInterior = filters.colorsInt.length === 0 || filters.colorsInt.includes(car.colourInt || '');
     const matchesSpecCode = filters.specCodes.length === 0 || filters.specCodes.includes(car.specCode || '');
+    const matchesBranch = filters.branches.length === 0 || filters.branches.includes(car.branch || '');
     const matchesSP = filters.sp.length === 0 || filters.sp.includes(car.sp || '');
+    const matchesDeal = filters.deals.length === 0 || filters.deals.includes(car.deal || '');
     
-    return matchesSearch && matchesStatus && matchesModel && matchesYear && matchesBranch && matchesColor && matchesBarcode && matchesSpecCode && matchesSP;
+    return matchesSearch && matchesStatus && matchesModel && matchesBarcode && matchesDescription && 
+           matchesYear && matchesColor && matchesInterior && matchesSpecCode && matchesBranch && 
+           matchesSP && matchesDeal;
   });
 };
 

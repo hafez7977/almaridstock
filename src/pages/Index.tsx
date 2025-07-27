@@ -56,12 +56,15 @@ const Index = () => {
     search: '',
     statuses: [],
     models: [],
-    years: [],
-    branches: [],
-    colorsExt: [],
     barcodes: [],
+    descriptions: [],
+    years: [],
+    colorsExt: [],
+    colorsInt: [],
     specCodes: [],
-    sp: []
+    branches: [],
+    sp: [],
+    deals: []
   });
 
   const { isAuthenticated, spreadsheetId } = useGoogleAuth();

@@ -20,12 +20,15 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     search: '',
     statuses: [],
     models: [], // Will contain car names
-    years: [],  // Will contain model/year data
-    branches: [],
-    colorsExt: [],
     barcodes: [],
+    descriptions: [],
+    years: [],  // Will contain model/year data
+    colorsExt: [],
+    colorsInt: [], // Interior colors
     specCodes: [],
-    sp: []
+    branches: [],
+    sp: [],
+    deals: [] // Deal codes
   });
 
   // Extract unique values from cars data with safety checks
@@ -66,25 +69,30 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     const rawStatuses = safeCars.map(car => car?.status).filter(Boolean);
     const normalizedStatuses = [...new Set(rawStatuses.map(normalizeStatus))];
     
-    // Models filter will now show car names
+    // Extract unique values for all filters
     const carNames = [...new Set(safeCars.map(car => car?.name).filter(Boolean))];
-    // Years filter will show model data  
-    const years = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
-    const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
-    const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
     const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
+    const descriptions = [...new Set(safeCars.map(car => car?.description).filter(Boolean))];
+    const years = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
+    const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
+    const colorsInt = [...new Set(safeCars.map(car => car?.colourInt).filter(Boolean))];
     const specCodes = [...new Set(safeCars.map(car => car?.specCode).filter(Boolean))];
+    const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
     const sp = [...new Set(safeCars.map(car => car?.sp).filter(Boolean))];
+    const deals = [...new Set(safeCars.map(car => car?.deal).filter(Boolean))];
 
     const result = {
       statuses: normalizedStatuses.sort(),
-      models: carNames.sort(), // Now contains car names
-      years: years.sort(),     // Now contains model/year data
-      branches: branches.sort(),
-      colorsExt: colorsExt.sort(),
+      models: carNames.sort(),
       barcodes: barcodes.sort(),
+      descriptions: descriptions.sort(),
+      years: years.sort(),
+      colorsExt: colorsExt.sort(),
+      colorsInt: colorsInt.sort(),
       specCodes: specCodes.sort(),
+      branches: branches.sort(),
       sp: sp.sort(),
+      deals: deals.sort(),
     };
     
     console.log('UniqueValues result:', result);
@@ -108,12 +116,15 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       search: '',
       statuses: [],
       models: [],
-      years: [],
-      branches: [],
-      colorsExt: [],
       barcodes: [],
+      descriptions: [],
+      years: [],
+      colorsExt: [],
+      colorsInt: [],
       specCodes: [],
-      sp: []
+      branches: [],
+      sp: [],
+      deals: []
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
@@ -122,12 +133,15 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
   const hasActiveFilters = filters.search !== '' || 
     filters.statuses.length > 0 || 
     filters.models.length > 0 || 
-    filters.years.length > 0 ||
-    filters.branches.length > 0 || 
-    filters.colorsExt.length > 0 ||
     filters.barcodes.length > 0 ||
+    filters.descriptions.length > 0 ||
+    filters.years.length > 0 ||
+    filters.colorsExt.length > 0 ||
+    filters.colorsInt.length > 0 ||
     filters.specCodes.length > 0 ||
-    filters.sp.length > 0;
+    filters.branches.length > 0 || 
+    filters.sp.length > 0 ||
+    filters.deals.length > 0;
 
   return (
     <Card className="mb-6">
@@ -161,34 +175,26 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
             />
 
             <MultiSelect
-              options={uniqueValues.years}
-              selected={filters.years}
-              onChange={(values) => handleMultiSelectChange('years', values)}
-              placeholder="Year"
-              className="w-40"
-            />
-
-            <MultiSelect
-              options={uniqueValues.specCodes}
-              selected={filters.specCodes}
-              onChange={(values) => handleMultiSelectChange('specCodes', values)}
-              placeholder="Spec. Code"
-              className="w-40"
-            />
-
-            <MultiSelect
-              options={uniqueValues.branches}
-              selected={filters.branches}
-              onChange={(values) => handleMultiSelectChange('branches', values)}
-              placeholder="Branch"
-              className="w-40"
-            />
-
-            <MultiSelect
               options={uniqueValues.barcodes}
               selected={filters.barcodes}
               onChange={(values) => handleMultiSelectChange('barcodes', values)}
               placeholder="Barcode"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.descriptions}
+              selected={filters.descriptions}
+              onChange={(values) => handleMultiSelectChange('descriptions', values)}
+              placeholder="Description"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.years}
+              selected={filters.years}
+              onChange={(values) => handleMultiSelectChange('years', values)}
+              placeholder="Year"
               className="w-40"
             />
 
@@ -201,10 +207,42 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
             />
 
             <MultiSelect
+              options={uniqueValues.colorsInt}
+              selected={filters.colorsInt}
+              onChange={(values) => handleMultiSelectChange('colorsInt', values)}
+              placeholder="Interior"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.specCodes}
+              selected={filters.specCodes}
+              onChange={(values) => handleMultiSelectChange('specCodes', values)}
+              placeholder="Spec Code"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.branches}
+              selected={filters.branches}
+              onChange={(values) => handleMultiSelectChange('branches', values)}
+              placeholder="Branch"
+              className="w-40"
+            />
+
+            <MultiSelect
               options={uniqueValues.sp}
               selected={filters.sp}
               onChange={(values) => handleMultiSelectChange('sp', values)}
               placeholder="SP"
+              className="w-40"
+            />
+
+            <MultiSelect
+              options={uniqueValues.deals}
+              selected={filters.deals}
+              onChange={(values) => handleMultiSelectChange('deals', values)}
+              placeholder="Deal"
               className="w-40"
             />
 
@@ -224,12 +262,15 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
                 filters.search && `Search: "${filters.search}"`,
                 filters.statuses.length > 0 && `Status: ${filters.statuses.length} selected`,
                 filters.models.length > 0 && `Name: ${filters.models.length} selected`,
-                filters.years.length > 0 && `Year: ${filters.years.length} selected`,
-                filters.specCodes.length > 0 && `Spec. Code: ${filters.specCodes.length} selected`,
-                filters.branches.length > 0 && `Branch: ${filters.branches.length} selected`,
-                filters.colorsExt.length > 0 && `Color: ${filters.colorsExt.length} selected`,
                 filters.barcodes.length > 0 && `Barcode: ${filters.barcodes.length} selected`,
+                filters.descriptions.length > 0 && `Description: ${filters.descriptions.length} selected`,
+                filters.years.length > 0 && `Year: ${filters.years.length} selected`,
+                filters.colorsExt.length > 0 && `Color: ${filters.colorsExt.length} selected`,
+                filters.colorsInt.length > 0 && `Interior: ${filters.colorsInt.length} selected`,
+                filters.specCodes.length > 0 && `Spec Code: ${filters.specCodes.length} selected`,
+                filters.branches.length > 0 && `Branch: ${filters.branches.length} selected`,
                 filters.sp.length > 0 && `SP: ${filters.sp.length} selected`,
+                filters.deals.length > 0 && `Deal: ${filters.deals.length} selected`,
               ].filter(Boolean).join(', ')
             }
           </div>
