@@ -1,0 +1,117 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Car } from "@/types/car";
+import { User } from "lucide-react";
+
+interface SPTrackerProps {
+  cars: Car[];
+}
+
+interface SPStats {
+  sp: string;
+  booked: number;
+  sold: number;
+  total: number;
+}
+
+export const SPTracker = ({ cars }: SPTrackerProps) => {
+  // Group cars by SP and count status
+  const spStats = cars.reduce((acc: Record<string, SPStats>, car) => {
+    const sp = car.sp?.trim() || 'Unassigned';
+    
+    if (!acc[sp]) {
+      acc[sp] = { sp, booked: 0, sold: 0, total: 0 };
+    }
+    
+    if (car.status.toLowerCase() === 'booked') {
+      acc[sp].booked++;
+    } else if (car.status.toLowerCase() === 'sold') {
+      acc[sp].sold++;
+    }
+    
+    acc[sp].total = acc[sp].booked + acc[sp].sold;
+    
+    return acc;
+  }, {});
+
+  // Convert to array and sort by total (highest first)
+  const sortedStats = Object.values(spStats)
+    .filter(stat => stat.total > 0) // Only show SPs with booked/sold cars
+    .sort((a, b) => b.total - a.total);
+
+  const totalBooked = sortedStats.reduce((sum, stat) => sum + stat.booked, 0);
+  const totalSold = sortedStats.reduce((sum, stat) => sum + stat.sold, 0);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Sales Person Performance Tracker
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4 flex gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{totalBooked}</div>
+            <div className="text-sm text-muted-foreground">Total Booked</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{totalSold}</div>
+            <div className="text-sm text-muted-foreground">Total Sold</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">{totalBooked + totalSold}</div>
+            <div className="text-sm text-muted-foreground">Total Deals</div>
+          </div>
+        </div>
+
+        {sortedStats.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            No booked or sold cars found
+          </p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Sales Person</TableHead>
+                <TableHead className="text-center">Booked</TableHead>
+                <TableHead className="text-center">Sold</TableHead>
+                <TableHead className="text-center">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedStats.map((stat) => (
+                <TableRow key={stat.sp}>
+                  <TableCell className="font-medium">{stat.sp}</TableCell>
+                  <TableCell className="text-center">
+                    {stat.booked > 0 && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        {stat.booked}
+                      </Badge>
+                    )}
+                    {stat.booked === 0 && <span className="text-muted-foreground">0</span>}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {stat.sold > 0 && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {stat.sold}
+                      </Badge>
+                    )}
+                    {stat.sold === 0 && <span className="text-muted-foreground">0</span>}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="font-bold">
+                      {stat.total}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

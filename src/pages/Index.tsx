@@ -50,6 +50,8 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { Calendar, FileText, AlertTriangle, BarChart3, Loader2, Download } from 'lucide-react';
 import { MultiFilters, filterCars, sortCarsWithPriority, getAvailableCars, getBookedCars, isAvailable, isBooked } from '@/utils/carFilters';
+import { ReportGenerator } from '@/components/inventory/ReportGenerator';
+import { SPTracker } from '@/components/reports/SPTracker';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('stock');
@@ -456,6 +458,11 @@ const Index = () => {
                     </Button>
                   </div>
                 </div>
+              </div>
+              
+              {/* SP Tracker Section */}
+              <div className="mt-8">
+                <SPTracker cars={[...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])]} />
               </div>
             </CardContent>
           </Card>
