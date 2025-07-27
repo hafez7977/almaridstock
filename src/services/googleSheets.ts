@@ -210,175 +210,81 @@ class GoogleSheetsService {
           console.log(`Processing first row:`, row);
         }
       
-      headers.forEach((header, colIndex) => {
-        const value = row[colIndex] || '';
-        const headerLower = header.toLowerCase().trim();
-        
-        // Debug: show all header processing for first row
-        if (index === 0) {
-          console.log(`  Column ${colIndex}: header="${header}" -> value="${value}"`);
-        }
-        
-        switch (headerLower) {
-          case 'sn':
-          case 'sn.':
-          case 'serial number':
-          case 'serial no':
-          case 's/n':
+        headers.forEach((header, colIndex) => {
+          const value = row[colIndex] || '';
+          const headerLower = header.toLowerCase().trim();
+          
+          // Debug: show all header processing for first row
+          if (index === 0) {
+            console.log(`  Column ${colIndex}: header="${header}" -> value="${value}"`);
+          }
+          
+          // More flexible column matching using includes() for better compatibility
+          if (headerLower.includes('sn') || headerLower.includes('serial')) {
             // Use row number if SN is empty or invalid, starting from 1
             car.sn = parseInt(value) || (index + 1);
-            break;
-          case 'status':
+          } else if (headerLower.includes('status')) {
             car.status = value || 'Available';
-            break;
-          case 'name':
+          } else if (headerLower.includes('name')) {
             car.name = value;
-            break;
-          case 'barcode':
-          case 'bar code':
+          } else if (headerLower.includes('barcode') || headerLower.includes('bar code')) {
             car.barCode = value;
-            break;
-          case 'model':
+          } else if (headerLower.includes('model')) {
             car.model = value;
-            break;
-          case 'speccode':
-          case 'spec code':
-          case 'spec.code':
+          } else if (headerLower.includes('spec') && headerLower.includes('code')) {
             car.specCode = value;
-            break;
-          case 'description':
-          case 'desc':
-          case 'details':
-          case 'specs':
-          case 'specification':
-          case 'info':
-          case 'notes':
-          case 'comment':
-          case 'comments':
-          case 'remarks':
+          } else if (headerLower.includes('description') || headerLower.includes('desc') || 
+                     headerLower.includes('details') || headerLower.includes('specs') || 
+                     headerLower.includes('specification') || headerLower.includes('info') || 
+                     headerLower.includes('notes') || headerLower.includes('comment') || 
+                     headerLower.includes('remarks')) {
             car.description = value;
-            break;
-          case 'colourext':
-          case 'colour ext':
-          case 'colour ext.':
-          case 'exterior color':
-          case 'color ext':
-          case 'color ext.':
-          case 'color':
-          case 'ext color':
-          case 'external color':
-          case 'exterior colour':
-          case 'ext colour':
-          case 'color exterior':
-          case 'colour exterior':
-          case 'clr ext':
-          case 'clr_ext':
-          case 'colorext':
-          case 'exterior':
-          case 'ext':
-          case 'outside color':
-          case 'outside colour':
-          case 'outer color':
-          case 'outer colour':
-          case 'body color':
-          case 'body colour':
-          case 'paint color':
-          case 'paint colour':
+          } else if ((headerLower.includes('colour') || headerLower.includes('color')) && 
+                     (headerLower.includes('ext') || headerLower.includes('exterior') || headerLower.includes('external'))) {
             car.colourExt = value;
             console.log('Found colourExt:', value, 'from header:', header);
-            break;
-          case 'colourint':
-          case 'colour int':
-          case 'colour int.':
-          case 'interior color':
-          case 'color int':
-          case 'color int.':
-          case 'int color':
-          case 'internal color':
-          case 'interior colour':
-          case 'int colour':
-          case 'color interior':
-          case 'colour interior':
-          case 'clr int':
-          case 'clr_int':
-          case 'colorint':
-          case 'interior':
-          case 'int':
-          case 'inside color':
-          case 'inside colour':
-          case 'inner color':
-          case 'inner colour':
-          case 'cabin color':
-          case 'cabin colour':
-          case 'trim color':
-          case 'trim colour':
+          } else if ((headerLower.includes('colour') || headerLower.includes('color')) && 
+                     (headerLower.includes('int') || headerLower.includes('interior') || headerLower.includes('internal'))) {
             car.colourInt = value;
             console.log('Found colourInt:', value, 'from header:', header);
-            break;
-          case 'chassisno':
-          case 'chassis no':
+          } else if (headerLower.includes('chassis')) {
             car.chassisNo = value;
-            break;
-          case 'engineno':
-          case 'engine no':
-          case 'engine no.':
+          } else if (headerLower.includes('engine')) {
             car.engineNo = value;
-            break;
-          case 'supplier':
+          } else if (headerLower.includes('supplier')) {
             car.supplier = value;
-            break;
-          case 'branch':
+          } else if (headerLower.includes('branch')) {
             car.branch = value;
-            break;
-          case 'place':
-          case 'location':
+          } else if (headerLower.includes('place') || headerLower.includes('location')) {
             car.place = value;
-            break;
-          case 'customerdetails':
-          case 'customer details':
+          } else if (headerLower.includes('customer')) {
             car.customerDetails = value;
-            break;
-          case 'sp':
+          } else if (headerLower === 'sp') {
             car.sp = value;
-            break;
-          case 'sd':
-          case 's/d':
+          } else if (headerLower === 'sd' || headerLower === 's/d') {
             car.sd = value;
-            break;
-          case 'invno':
-          case 'inv no':
-          case 'inv #':
+          } else if (headerLower.includes('inv') && (headerLower.includes('no') || headerLower.includes('#'))) {
             car.invNo = value;
-            break;
-          case 'ampi':
-          case 'ampi #':
+          } else if (headerLower.includes('ampi')) {
             car.ampi = value;
-            break;
-          case 'paper':
+          } else if (headerLower.includes('paper')) {
             car.paper = value;
-            break;
-          case 'deal':
-          case 'deal code':
+          } else if (headerLower.includes('deal')) {
             car.deal = value;
-            break;
-          case 'receiveddate':
-          case 'received date':
-          case 'receiving date':
+          } else if (headerLower.includes('receiv') && headerLower.includes('date')) {
             car.receivedDate = value;
-            break;
-          case 'aging':
+          } else if (headerLower.includes('aging')) {
             car.aging = parseInt(value) || 0;
-            break;
+          }
+        });
+
+        // Debug: show final car object for first row
+        if (index === 0) {
+          console.log('Final car object for first row:', car);
         }
+
+        return car as Car;
       });
-
-      // Debug: show final car object for first row
-      if (index === 0) {
-        console.log('Final car object for first row:', car);
-      }
-
-      return car as Car;
-    });
   }
 
   // Convert Car objects to Google Sheets rows
