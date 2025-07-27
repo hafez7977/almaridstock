@@ -22,7 +22,7 @@ export const useGoogleSheets = () => {
       try {
         const rows = await googleSheetsService.readSheet(spreadsheetId, 'Stock!A:W');
         console.log('Stock rows fetched:', rows?.length || 0);
-        return googleSheetsService.parseCarData(rows);
+        return googleSheetsService.parseCarData(rows, 'stock');
       } catch (error) {
         console.error('Error fetching stock cars:', error);
         throw error;
@@ -44,7 +44,7 @@ export const useGoogleSheets = () => {
       try {
         const rows = await googleSheetsService.readSheet(spreadsheetId, 'Incoming!A:W');
         console.log('Incoming rows fetched:', rows?.length || 0);
-        return googleSheetsService.parseCarData(rows);
+        return googleSheetsService.parseCarData(rows, 'incoming');
       } catch (error) {
         console.error('Error fetching incoming cars:', error);
         throw error;

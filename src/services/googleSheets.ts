@@ -179,13 +179,14 @@ class GoogleSheetsService {
     return cars;
   }
 
-  // Convert Google Sheets rows to Car objects
-  parseCarData(rows: any[][]): Car[] {
+  // Convert Google Sheets rows to Car objects with tab-specific column mapping
+  parseCarData(rows: any[][], tabType: string = 'general'): Car[] {
     if (!rows || rows.length < 2) return [];
 
     const headers = rows[0];
     const dataRows = rows.slice(1);
 
+    console.log('Parsing data for tab type:', tabType);
     console.log('Headers from Google Sheets:', headers);
     console.log('First data row:', dataRows[0]);
     
@@ -240,7 +241,7 @@ class GoogleSheetsService {
                      headerLower.includes('notes') || headerLower.includes('comment') || 
                      headerLower.includes('remarks')) {
             car.description = value;
-            console.log('Found description:', value, 'from header:', header);
+            console.log('Found description via header matching:', value, 'from header:', header);
           } else if ((headerLower.includes('colour') || headerLower.includes('color')) && 
                      (headerLower.includes('ext') || headerLower.includes('exterior') || headerLower.includes('external'))) {
             car.colourExt = value;
@@ -279,6 +280,17 @@ class GoogleSheetsService {
             car.aging = parseInt(value) || 0;
           }
         });
+
+        // Tab-specific column mapping for description
+        if (tabType === 'stock' && row[6]) {
+          // For Stock tab, get description from column G (index 6)
+          car.description = row[6];
+          console.log('Stock tab - Set description from column G:', row[6]);
+        } else if (tabType === 'incoming' && row[5]) {
+          // For Incoming tab, get description from column F (index 5)
+          car.description = row[5];
+          console.log('Incoming tab - Set description from column F:', row[5]);
+        }
 
         // Debug: show final car object for first row
         if (index === 0) {
