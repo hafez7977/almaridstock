@@ -157,13 +157,13 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap gap-2">
             <MultiSelect
               options={uniqueValues.statuses}
               selected={filters.statuses}
               onChange={(values) => handleMultiSelectChange('statuses', values)}
               placeholder="Status"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -171,7 +171,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.models}
               onChange={(values) => handleMultiSelectChange('models', values)}
               placeholder="Name"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -179,7 +179,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.barcodes}
               onChange={(values) => handleMultiSelectChange('barcodes', values)}
               placeholder="Barcode"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -187,7 +187,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.descriptions}
               onChange={(values) => handleMultiSelectChange('descriptions', values)}
               placeholder="Description"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -195,7 +195,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.years}
               onChange={(values) => handleMultiSelectChange('years', values)}
               placeholder="Year"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -203,7 +203,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.colorsExt}
               onChange={(values) => handleMultiSelectChange('colorsExt', values)}
               placeholder="Color"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -211,7 +211,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.colorsInt}
               onChange={(values) => handleMultiSelectChange('colorsInt', values)}
               placeholder="Interior"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -219,7 +219,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.specCodes}
               onChange={(values) => handleMultiSelectChange('specCodes', values)}
               placeholder="Spec Code"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -227,7 +227,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.branches}
               onChange={(values) => handleMultiSelectChange('branches', values)}
               placeholder="Branch"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -235,7 +235,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.sp}
               onChange={(values) => handleMultiSelectChange('sp', values)}
               placeholder="SP"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             <MultiSelect
@@ -243,11 +243,11 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               selected={filters.deals}
               onChange={(values) => handleMultiSelectChange('deals', values)}
               placeholder="Deal"
-              className="w-40"
+              className="w-full lg:w-40"
             />
 
             {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
+              <Button variant="outline" size="sm" onClick={clearFilters} className="col-span-2 sm:col-span-1">
                 <X className="h-4 w-4 mr-1" />
                 Clear All
               </Button>
