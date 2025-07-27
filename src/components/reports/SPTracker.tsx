@@ -15,31 +15,58 @@ interface SPStats {
   total: number;
 }
 
+interface SPStatsWithSets {
+  sp: string;
+  booked: number;
+  sold: number;
+  total: number;
+  bookedDeals: Set<string>;
+  soldDeals: Set<string>;
+}
+
 export const SPTracker = ({ cars }: SPTrackerProps) => {
-  // Group cars by SP and count status
-  const spStats = cars.reduce((acc: Record<string, SPStats>, car) => {
+  // Group cars by SP and count unique deals
+  const spStats = cars.reduce((acc: Record<string, SPStatsWithSets>, car) => {
     const sp = car.sp?.trim() || 'Unassigned';
+    const deal = car.deal?.trim();
     
     if (!acc[sp]) {
-      acc[sp] = { sp, booked: 0, sold: 0, total: 0 };
+      acc[sp] = { 
+        sp, 
+        booked: 0, 
+        sold: 0, 
+        total: 0,
+        bookedDeals: new Set<string>(),
+        soldDeals: new Set<string>()
+      };
     }
     
     // Handle various status spellings and cases
     const status = car.status?.toLowerCase().trim();
-    if (status === 'booked') {
-      acc[sp].booked++;
-    } else if (status === 'sold') {
-      acc[sp].sold++;
-    }
     
-    acc[sp].total = acc[sp].booked + acc[sp].sold;
+    // Only count deals that have a valid deal ID
+    if (deal && deal !== '' && deal !== 'N/A' && deal !== 'n/a') {
+      if (status === 'booked') {
+        acc[sp].bookedDeals.add(deal);
+      } else if (status === 'sold') {
+        acc[sp].soldDeals.add(deal);
+      }
+    }
     
     return acc;
   }, {});
 
-  // Convert to array and sort by total (highest first)
-  const sortedStats = Object.values(spStats)
-    .filter(stat => stat.total > 0) // Only show SPs with booked/sold cars
+  // Convert sets to counts and calculate totals
+  const processedStats = Object.values(spStats).map(stat => ({
+    sp: stat.sp,
+    booked: stat.bookedDeals.size,
+    sold: stat.soldDeals.size,
+    total: stat.bookedDeals.size + stat.soldDeals.size
+  }));
+
+  // Filter and sort by total (highest first)
+  const sortedStats = processedStats
+    .filter(stat => stat.total > 0) // Only show SPs with booked/sold deals
     .sort((a, b) => b.total - a.total);
 
   const totalBooked = sortedStats.reduce((sum, stat) => sum + stat.booked, 0);
