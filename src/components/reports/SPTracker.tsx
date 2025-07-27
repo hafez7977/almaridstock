@@ -24,9 +24,11 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
       acc[sp] = { sp, booked: 0, sold: 0, total: 0 };
     }
     
-    if (car.status.toLowerCase() === 'booked') {
+    // Handle various status spellings and cases
+    const status = car.status?.toLowerCase().trim();
+    if (status === 'booked') {
       acc[sp].booked++;
-    } else if (car.status.toLowerCase() === 'sold') {
+    } else if (status === 'sold') {
       acc[sp].sold++;
     }
     
