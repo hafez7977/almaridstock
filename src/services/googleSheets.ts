@@ -233,12 +233,14 @@ class GoogleSheetsService {
             car.model = value;
           } else if (headerLower.includes('spec') && headerLower.includes('code')) {
             car.specCode = value;
-          } else if (headerLower.includes('description') || headerLower.includes('desc') || 
+          } else if (headerLower === 'description' || headerLower === 'desc' || 
+                     headerLower.includes('description') || headerLower.includes('desc') || 
                      headerLower.includes('details') || headerLower.includes('specs') || 
                      headerLower.includes('specification') || headerLower.includes('info') || 
                      headerLower.includes('notes') || headerLower.includes('comment') || 
                      headerLower.includes('remarks')) {
             car.description = value;
+            console.log('Found description:', value, 'from header:', header);
           } else if ((headerLower.includes('colour') || headerLower.includes('color')) && 
                      (headerLower.includes('ext') || headerLower.includes('exterior') || headerLower.includes('external'))) {
             car.colourExt = value;
