@@ -103,89 +103,94 @@ export const CarTable = ({ cars, title, onCarUpdate, isKsaTab = false }: CarTabl
   const getStatusBadge = (status: string, car?: Car, isKsaTab?: boolean) => {
     if (!status) return <Badge variant="outline">-</Badge>;
     
+    let displayStatus = status;
     const cleanStatus = status.toLowerCase().trim();
     
-    // Special coloring for KSA tab incoming cars (except ksa-76-april)
-    if (isKsaTab && car?.place?.toLowerCase() === 'incoming' && 
-        !car.barCode?.toLowerCase().includes('ksa-76-april') && 
-        cleanStatus.includes('available')) {
-      return (
-        <Badge className="bg-purple text-purple-foreground">
-          {status}
-        </Badge>
-      );
+    // KSA tab logic for incoming cars
+    if (isKsaTab && car?.place?.toLowerCase() === 'incoming') {
+      // If car is available, show as UNRECEIVED
+      if (cleanStatus === 'available' || 
+          cleanStatus === 'availabe' || 
+          cleanStatus === 'availble' || 
+          cleanStatus === 'avaliable' ||
+          cleanStatus.includes('available')) {
+        displayStatus = 'UNRECEIVED';
+      }
+      // If car is not available, keep original status
     }
     
+    const cleanDisplayStatus = displayStatus.toLowerCase().trim();
+    
     // Check for Available (with misspellings)
-    if (cleanStatus === 'available' || 
-        cleanStatus === 'availabe' || 
-        cleanStatus === 'availble' || 
-        cleanStatus === 'avaliable' ||
-        cleanStatus.includes('available')) {
+    if (cleanDisplayStatus === 'available' || 
+        cleanDisplayStatus === 'availabe' || 
+        cleanDisplayStatus === 'availble' || 
+        cleanDisplayStatus === 'avaliable' ||
+        cleanDisplayStatus.includes('available')) {
       return (
         <Badge className="bg-light-green text-light-green-foreground">
-          {status}
+          {displayStatus}
         </Badge>
       );
     }
     
     // Check for Booked (with misspellings)
-    if (cleanStatus === 'booked' || 
-        cleanStatus === 'bookd' || 
-        cleanStatus === 'booked' ||
-        cleanStatus.includes('booked')) {
+    if (cleanDisplayStatus === 'booked' || 
+        cleanDisplayStatus === 'bookd' || 
+        cleanDisplayStatus === 'booked' ||
+        cleanDisplayStatus.includes('booked')) {
       return (
         <Badge className="bg-yellow text-yellow-foreground">
-          {status}
+          {displayStatus}
         </Badge>
       );
     }
     
     // Check for Sold (with misspellings)
-    if (cleanStatus === 'sold' || 
-        cleanStatus === 'sol' || 
-        cleanStatus === 'sld' ||
-        cleanStatus.includes('sold')) {
+    if (cleanDisplayStatus === 'sold' || 
+        cleanDisplayStatus === 'sol' || 
+        cleanDisplayStatus === 'sld' ||
+        cleanDisplayStatus.includes('sold')) {
       return (
         <Badge className="bg-dark-blue text-dark-blue-foreground">
-          {status}
+          {displayStatus}
         </Badge>
       );
     }
     
     // Check for Shipped (with misspellings)
-    if (cleanStatus === 'shipped' || 
-        cleanStatus === 'shipd' || 
-        cleanStatus === 'shiped' ||
-        cleanStatus.includes('shipped')) {
+    if (cleanDisplayStatus === 'shipped' || 
+        cleanDisplayStatus === 'shipd' || 
+        cleanDisplayStatus === 'shiped' ||
+        cleanDisplayStatus.includes('shipped')) {
       return (
         <Badge className="bg-dark-orange text-dark-orange-foreground">
-          {status}
+          {displayStatus}
         </Badge>
       );
     }
     
     // Check for UNRECEIVED
-    if (cleanStatus === 'unreceived' || 
-        cleanStatus === 'unrcv' || 
-        cleanStatus === 'unrec' ||
-        cleanStatus.includes('unreceived')) {
+    if (cleanDisplayStatus === 'unreceived' || 
+        cleanDisplayStatus === 'unrcv' || 
+        cleanDisplayStatus === 'unrec' ||
+        cleanDisplayStatus.includes('unreceived')) {
       return (
         <Badge className="bg-light-yellow text-light-yellow-foreground">
-          {status}
+          {displayStatus}
         </Badge>
       );
     }
     
     // Check for Invoiced (with misspellings)
-    if (cleanStatus === 'invoiced' || 
-        cleanStatus === 'invoiced' || 
-        cleanStatus === 'invocied' || 
-        cleanStatus === 'invoicd' ||
-        cleanStatus.includes('invoiced')) {
+    if (cleanDisplayStatus === 'invoiced' || 
+        cleanDisplayStatus === 'invoiced' || 
+        cleanDisplayStatus === 'invocied' || 
+        cleanDisplayStatus === 'invoicd' ||
+        cleanDisplayStatus.includes('invoiced')) {
       return (
         <Badge className="bg-dark-blue text-dark-blue-foreground">
-          {status}
+          {displayStatus}
         </Badge>
       );
     }
@@ -193,7 +198,7 @@ export const CarTable = ({ cars, title, onCarUpdate, isKsaTab = false }: CarTabl
     // Default variants for other statuses
     return (
       <Badge variant="outline">
-        {status}
+        {displayStatus}
       </Badge>
     );
   };
