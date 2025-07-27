@@ -14,25 +14,13 @@ interface MobileCarCardProps {
 
 export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = false }: MobileCarCardProps) => {
   const getStatusColor = (status: string) => {
-    let displayStatus = status;
     const statusLower = status.toLowerCase();
     
-    // KSA tab logic for incoming cars
-    if (isKsaTab && car.place?.toLowerCase() === 'incoming') {
-      // If car is available, show as UNRECEIVED
-      if (statusLower.includes('available')) {
-        displayStatus = 'UNRECEIVED';
-      }
-      // If car is not available, keep original status
-    }
-    
-    const displayStatusLower = displayStatus.toLowerCase();
-    
-    if (displayStatusLower.includes('available')) return 'bg-light-green text-light-green-foreground';
-    if (displayStatusLower.includes('booked')) return 'bg-yellow text-yellow-foreground';
-    if (displayStatusLower.includes('sold')) return 'bg-dark-blue text-dark-blue-foreground';
-    if (displayStatusLower.includes('shipped')) return 'bg-dark-orange text-dark-orange-foreground';
-    if (displayStatusLower.includes('unreceived')) return 'bg-light-yellow text-light-yellow-foreground';
+    if (statusLower.includes('available')) return 'bg-light-green text-light-green-foreground';
+    if (statusLower.includes('booked')) return 'bg-yellow text-yellow-foreground';
+    if (statusLower.includes('sold')) return 'bg-dark-blue text-dark-blue-foreground';
+    if (statusLower.includes('shipped')) return 'bg-dark-orange text-dark-orange-foreground';
+    if (statusLower.includes('unreceived')) return 'bg-light-yellow text-light-yellow-foreground';
     return 'bg-secondary text-secondary-foreground';
   };
 
@@ -46,7 +34,7 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
             <p className="text-sm text-gray-500">SN: {car.sn}</p>
           </div>
           <Badge className={cn("ml-2 shrink-0 text-xs px-2 py-1", getStatusColor(car.status))}>
-            {isKsaTab && car.place?.toLowerCase() === 'incoming' && car.status.toLowerCase().includes('available') ? 'UNRECEIVED' : car.status}
+            {car.status}
           </Badge>
         </div>
 
