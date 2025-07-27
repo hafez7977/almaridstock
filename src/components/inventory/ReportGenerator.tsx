@@ -246,10 +246,13 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       onClick={generateReport}
       variant="outline"
       size="sm"
-      className="gap-2"
+      className="gap-1 px-2 sm:px-3 text-xs sm:text-sm w-full sm:w-auto"
     >
-      <Download className="h-4 w-4" />
-      Export Available & Booked ({tabName})
+      <Download className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="truncate">
+        <span className="hidden sm:inline">Export Available & Booked ({tabName})</span>
+        <span className="sm:hidden">Export A&B ({tabName})</span>
+      </span>
     </Button>
   );
 };
