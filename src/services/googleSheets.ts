@@ -216,7 +216,7 @@ class GoogleSheetsService {
           
           // Debug: show all header processing for first row
           if (index === 0) {
-            console.log(`  Column ${colIndex}: header="${header}" -> value="${value}"`);
+            console.log(`  Column ${colIndex}: header="${header}" (${headerLower}) -> value="${value}"`);
           }
           
           // More flexible column matching using includes() for better compatibility
