@@ -30,7 +30,7 @@ export const Header = () => {
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="p-1.5 bg-primary/10 rounded-lg flex-shrink-0">
               <img 
-                src="/lovable-uploads/36a66632-d50f-4480-88ae-74894104308c.png" 
+                src="/lovable-uploads/d36ea1f5-c28c-4a77-b0f6-4cca4e91049d.png" 
                 alt="Al Marid Motors Logo" 
                 className="h-6 w-6 object-contain"
               />
