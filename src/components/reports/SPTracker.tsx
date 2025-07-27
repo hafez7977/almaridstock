@@ -25,9 +25,10 @@ interface SPStatsWithSets {
 }
 
 export const SPTracker = ({ cars }: SPTrackerProps) => {
-  // Group cars by SP and count unique deals
+  // Group cars by SP initials and count unique deals
   const spStats = cars.reduce((acc: Record<string, SPStatsWithSets>, car) => {
-    const sp = car.sp?.trim() || 'Unassigned';
+    // Use SP initials from the highlighted column
+    const sp = car.sp?.trim().toUpperCase() || 'UNASSIGNED';
     const deal = car.deal?.trim();
     
     if (!acc[sp]) {
@@ -44,8 +45,8 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
     // Handle various status spellings and cases
     const status = car.status?.toLowerCase().trim();
     
-    // Only count deals that have a valid deal ID
-    if (deal && deal !== '' && deal !== 'N/A' && deal !== 'n/a') {
+    // Only count deals that have a valid deal ID and are not empty
+    if (deal && deal !== '' && deal !== 'N/A' && deal !== 'n/a' && deal !== 'null') {
       if (status === 'booked') {
         acc[sp].bookedDeals.add(deal);
       } else if (status === 'sold') {
