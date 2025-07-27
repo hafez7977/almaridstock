@@ -32,7 +32,7 @@ export const Header = () => {
               <img 
                 src="/lovable-uploads/d36ea1f5-c28c-4a77-b0f6-4cca4e91049d.png" 
                 alt="Al Marid Motors Logo" 
-                className="h-6 w-6 object-contain"
+                className="h-full w-full object-cover rounded-lg"
               />
             </div>
             <div className="min-w-0 flex-1">
