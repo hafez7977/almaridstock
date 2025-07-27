@@ -175,7 +175,7 @@ const Index = () => {
                     disabled={filteredCars.length === 0}
                   >
                     <Download className="h-4 w-4" />
-                    Export to Excel ({filteredCars.length} cars)
+                    Export by filter ({filteredCars.length} cars)
                   </Button>
                 </div>
               </div>

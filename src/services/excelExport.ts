@@ -1,8 +1,12 @@
 import * as ExcelJS from 'exceljs';
 import { Car } from '@/types/car';
+import { sortCarsWithPriority, isAvailable, isBooked } from '@/utils/carFilters';
 
 class ExcelExportService {
   async exportCarsToExcel(cars: Car[], filename: string, sheetName: string): Promise<void> {
+    // Apply the same sorting used in reports
+    const sortedCars = sortCarsWithPriority(cars);
+    
     // Create a new workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(sheetName);
@@ -52,8 +56,8 @@ class ExcelExportService {
       };
     });
 
-    // Add data rows
-    cars.forEach((car, index) => {
+    // Add data rows with the same sorting as reports
+    sortedCars.forEach((car, index) => {
       const row = worksheet.addRow({
         sn: car.sn,
         status: car.status,
@@ -90,30 +94,60 @@ class ExcelExportService {
         };
       });
 
-      // Color-code rows based on status
-      if (car.status === 'Available') {
+      // Color-code rows based on status using the same scheme as reports
+      if (isAvailable(car.status)) {
+        // Light green for Available (same as reports)
         row.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFE8F5E8' }
+          fgColor: { argb: 'FFE8F5E8' } // Light green
         };
-      } else if (car.status === 'Booked') {
+      } else if (isBooked(car.status) || 
+                 car.status?.toLowerCase() === 'unreceived' || 
+                 car.status === 'UNRECEIVED' ||
+                 car.status?.toLowerCase().includes('received adv') ||
+                 car.status?.toLowerCase().includes('receved adv') ||
+                 car.status?.toLowerCase().includes('received advance') ||
+                 car.status?.toLowerCase().includes('recieved adv') ||
+                 (car.status?.toLowerCase().includes('received') && car.status?.toLowerCase().includes('adv'))) {
+        // Yellow for Booked/Unreceived (same as reports)
         row.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFFFF2CC' }
+          fgColor: { argb: 'FFFFF2CC' } // Light yellow
         };
-      } else if (car.status === 'Sold') {
+      } else if (car.status?.toLowerCase().includes('sold') || 
+                 car.status?.toLowerCase() === 'sol' || 
+                 car.status?.toLowerCase() === 'sould') {
+        // Red for Sold
         row.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFFFE6E6' }
+          fgColor: { argb: 'FFFFE6E6' } // Light red
         };
-      } else if (car.status === 'UNRECEIVED') {
+      } else if (car.status?.toLowerCase().includes('received') && 
+                 car.status?.toLowerCase().includes('full')) {
+        // Light blue for Received Full
         row.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFF0F0F0' }
+          fgColor: { argb: 'FFE6F3FF' } // Light blue
+        };
+      } else if (car.status?.toLowerCase().includes('invoiced') || 
+                 car.status?.toLowerCase() === 'invocied' || 
+                 car.status?.toLowerCase() === 'invoicd') {
+        // Light purple for Invoiced
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFF0E6FF' } // Light purple
+        };
+      } else {
+        // Light gray for other statuses
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFF5F5F5' } // Light gray
         };
       }
     });
