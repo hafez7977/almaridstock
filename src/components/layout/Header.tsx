@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useMemo } from "react";
+import { useAdmin } from "@/contexts/AdminContext";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { isAvailable, isBooked } from "@/utils/carFilters";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export const Header = () => {
   const { stockCars, incomingCars, ksaCars, isLoading } = useGoogleSheets();
+  const { isAdmin } = useAdmin();
   
   const carStats = useMemo(() => {
     const allCars = [...(stockCars || []), ...(incomingCars || []), ...(ksaCars || [])];
@@ -39,26 +41,28 @@ export const Header = () => {
             </div>
           </div>
           
-          {/* Car Stats - Centered */}
-          <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-muted/50 rounded-lg border absolute left-1/2 transform -translate-x-1/2">
-            <div className="text-center">
-              <div className="text-sm sm:text-base font-bold text-emerald-600">
-                {isLoading ? '-' : carStats.available}
+          {/* Car Stats - Centered (Admin Only) */}
+          {isAdmin && (
+            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-muted/50 rounded-lg border absolute left-1/2 transform -translate-x-1/2">
+              <div className="text-center">
+                <div className="text-sm sm:text-base font-bold text-emerald-600">
+                  {isLoading ? '-' : carStats.available}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide leading-none">
+                  Available
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide leading-none">
-                Available
+              <div className="w-px h-6 bg-border mx-1"></div>
+              <div className="text-center">
+                <div className="text-sm sm:text-base font-bold text-amber-600">
+                  {isLoading ? '-' : carStats.booked}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide leading-none">
+                  Booked
+                </div>
               </div>
             </div>
-            <div className="w-px h-6 bg-border mx-1"></div>
-            <div className="text-center">
-              <div className="text-sm sm:text-base font-bold text-amber-600">
-                {isLoading ? '-' : carStats.booked}
-              </div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide leading-none">
-                Booked
-              </div>
-            </div>
-          </div>
+          )}
           
           {/* Actions */}
           <div className="flex items-center gap-1 flex-1 justify-end">

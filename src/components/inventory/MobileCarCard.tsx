@@ -57,8 +57,12 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
             <p className="font-medium text-gray-900 truncate">{car.model || 'N/A'}</p>
           </div>
           <div>
-            <span className="text-gray-500 block">Color</span>
+            <span className="text-gray-500 block">Exterior</span>
             <p className="font-medium text-gray-900 truncate">{car.colourExt || 'N/A'}</p>
+          </div>
+          <div>
+            <span className="text-gray-500 block">Interior</span>
+            <p className="font-medium text-gray-900 truncate">{car.colourInt || 'N/A'}</p>
           </div>
           <div>
             <span className="text-gray-500 block">Branch</span>
