@@ -105,6 +105,16 @@ const Index = () => {
       activeTab === 'incoming' ? incomingCars || [] :
       ksaCars || [];
 
+    // Debug: Log KSA cars data to see actual status values
+    if (activeTab === 'ksa' && ksaCars && ksaCars.length > 0) {
+      console.log('KSA Cars raw data:', ksaCars.slice(0, 5).map(car => ({
+        sn: car.sn,
+        status: car.status,
+        place: car.place,
+        barCode: car.barCode
+      })));
+    }
+
     // Apply filters using the utility function
     const filtered = filterCars(currentCars, filters);
     
