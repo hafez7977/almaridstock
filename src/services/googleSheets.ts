@@ -143,7 +143,7 @@ class GoogleSheetsService {
         const car: any = {
           id: `ksa_${carCounter}`,
           sn: carCounter++,
-          status: isIncomingLocation ? 'UNRECEIVED' : (row[0] || 'Available'),
+          status: isIncomingLocation ? 'Booked' : (row[0] || 'Available'),
           name: row[1] || '',
           barCode: row[2] || '',
           model: row[3] || '',
