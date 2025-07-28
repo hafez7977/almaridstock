@@ -50,17 +50,23 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
   };
 
   const generateReport = async () => {
+    console.log('Generating report for tab:', tabName);
+    console.log('Total cars before filtering:', cars.length);
     // Filter for available and booked cars only
     const availableAndBookedCars = cars.filter(car => {
       const cleanStatus = car.status.toLowerCase().trim();
       
-      // For KSA, exclude cars with incoming location
+      console.log(`Car ${car.sn}: status="${car.status}", place="${car.place}", cleanStatus="${cleanStatus}"`);
+      
+      // For KSA, exclude cars with incoming location first
       if (tabName === 'KSA' && car.place?.toLowerCase() === 'incoming') {
+        console.log(`Excluding car ${car.sn} - incoming location`);
         return false;
       }
       
       // For KSA, exclude UNRECEIVED status
       if (tabName === 'KSA' && car.status === 'UNRECEIVED') {
+        console.log(`Excluding car ${car.sn} - UNRECEIVED status`);
         return false;
       }
       
@@ -87,8 +93,13 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         return true;
       }
       
-      return isAvailable || isBooked;
+      const shouldInclude = isAvailable || isBooked;
+      console.log(`Car ${car.sn}: isAvailable=${isAvailable}, isBooked=${isBooked}, shouldInclude=${shouldInclude}`);
+      
+      return shouldInclude;
     });
+
+    console.log('Cars after filtering:', availableAndBookedCars.length);
 
     if (availableAndBookedCars.length === 0) {
       toast({
