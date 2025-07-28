@@ -68,11 +68,11 @@ export const GoogleAuthButton: React.FC = () => {
           <Label htmlFor="spreadsheet-select">Select Google Sheets</Label>
           <Select
             value={spreadsheetId}
-            onValueChange={(value) => {
+            onValueChange={async (value) => {
               if (value === 'custom') {
-                setSpreadsheetId('');
+                await setSpreadsheetId('');
               } else {
-                setSpreadsheetId(value);
+                await setSpreadsheetId(value);
               }
             }}
           >
@@ -96,7 +96,7 @@ export const GoogleAuthButton: React.FC = () => {
                 id="spreadsheet-id"
                 placeholder="Enter your Google Sheets ID"
                 value={spreadsheetId}
-                onChange={(e) => setSpreadsheetId(e.target.value)}
+                onChange={async (e) => await setSpreadsheetId(e.target.value)}
               />
             </>
           )}

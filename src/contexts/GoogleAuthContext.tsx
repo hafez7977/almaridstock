@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 interface GoogleAuthContextType {
   user: User | null;
@@ -9,7 +11,7 @@ interface GoogleAuthContextType {
   isAuthenticated: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
-  setSpreadsheetId: (id: string) => void;
+  setSpreadsheetId: (id: string) => Promise<void>;
   spreadsheetId: string;
 }
 
@@ -32,9 +34,44 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [spreadsheetId, setSpreadsheetIdState] = useState<string>(() => {
-    return localStorage.getItem('google_spreadsheet_id') || '';
-  });
+  const [spreadsheetId, setSpreadsheetIdState] = useState<string>('');
+
+  // Helper functions for cross-platform storage
+  const setStorageItem = async (key: string, value: string) => {
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.set({ key, value });
+    } else {
+      localStorage.setItem(key, value);
+    }
+  };
+
+  const getStorageItem = async (key: string): Promise<string | null> => {
+    if (Capacitor.isNativePlatform()) {
+      const { value } = await Preferences.get({ key });
+      return value;
+    } else {
+      return localStorage.getItem(key);
+    }
+  };
+
+  const removeStorageItem = async (key: string) => {
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.remove({ key });
+    } else {
+      localStorage.removeItem(key);
+    }
+  };
+
+  // Initialize spreadsheet ID from storage
+  useEffect(() => {
+    const initializeSpreadsheetId = async () => {
+      const storedId = await getStorageItem('google_spreadsheet_id');
+      if (storedId) {
+        setSpreadsheetIdState(storedId);
+      }
+    };
+    initializeSpreadsheetId();
+  }, []);
 
   useEffect(() => {
     console.log('🔄 Setting up auth state listener...');
@@ -54,18 +91,23 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         setUser(session?.user ?? null);
         setIsLoading(false);
         
+        // Handle storage async operations using setTimeout to avoid blocking
         if (session?.provider_token) {
-          localStorage.setItem('google_access_token', session.provider_token);
-          console.log('✅ Updated Google provider token');
+          setTimeout(async () => {
+            await setStorageItem('google_access_token', session.provider_token!);
+            console.log('✅ Updated Google provider token');
+          }, 0);
         } else {
-          localStorage.removeItem('google_access_token');
-          console.log('🗑️ Removed Google provider token');
+          setTimeout(async () => {
+            await removeStorageItem('google_access_token');
+            console.log('🗑️ Removed Google provider token');
+          }, 0);
         }
       }
     );
 
     // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       console.log('📍 Initial session check:', { 
         hasSession: !!session, 
         hasUser: !!session?.user,
@@ -79,7 +121,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       setIsLoading(false);
       
       if (session?.provider_token) {
-        localStorage.setItem('google_access_token', session.provider_token);
+        await setStorageItem('google_access_token', session.provider_token);
         console.log('✅ Stored Google provider token from initial session');
       }
     });
@@ -125,8 +167,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
     
     try {
-      localStorage.removeItem('google_access_token');
-      localStorage.removeItem('google_spreadsheet_id');
+      await removeStorageItem('google_access_token');
+      await removeStorageItem('google_spreadsheet_id');
       
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -142,10 +184,10 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     }
   };
 
-  const setSpreadsheetId = (id: string) => {
+  const setSpreadsheetId = async (id: string) => {
     const cleanId = id.replace(/\/$/, '');
     setSpreadsheetIdState(cleanId);
-    localStorage.setItem('google_spreadsheet_id', cleanId);
+    await setStorageItem('google_spreadsheet_id', cleanId);
     console.log('📋 Updated spreadsheet ID:', cleanId);
   };
 
