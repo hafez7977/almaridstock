@@ -55,12 +55,17 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
     // Filter for available and booked cars only
     const availableAndBookedCars = cars.filter(car => {
       const cleanStatus = car.status.toLowerCase().trim();
+      const cleanPlace = (car.place || '').toLowerCase().trim();
       
-      console.log(`Car ${car.sn}: status="${car.status}", place="${car.place}", cleanStatus="${cleanStatus}"`);
+      console.log(`Car ${car.sn}: status="${car.status}", place="${car.place}", cleanStatus="${cleanStatus}", cleanPlace="${cleanPlace}"`);
       
-      // For KSA, exclude cars with incoming location first
-      if (tabName === 'KSA' && car.place?.toLowerCase() === 'incoming') {
-        console.log(`Excluding car ${car.sn} - incoming location`);
+      // For KSA, exclude cars with incoming location (check various cases)
+      if (tabName === 'KSA' && (
+        cleanPlace === 'incoming' || 
+        cleanPlace.includes('incoming') ||
+        car.place?.toLowerCase().includes('incoming')
+      )) {
+        console.log(`Excluding car ${car.sn} - incoming location (place: "${car.place}")`);
         return false;
       }
       
@@ -90,6 +95,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       
       // For Stock, include UNRECEIVED in booked category
       if (tabName === 'Stock' && car.status === 'UNRECEIVED') {
+        console.log(`Including car ${car.sn} - Stock tab UNRECEIVED`);
         return true;
       }
       
