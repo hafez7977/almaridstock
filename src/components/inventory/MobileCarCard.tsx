@@ -19,7 +19,7 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
     
     // KSA tab specific logic for incoming cars
     if (isKsaTab && car.place?.toLowerCase() === 'incoming') {
-      // If car is exactly "available" and location is incoming, mark as "Unreceived Available"
+      // If car is exactly "available" and location is incoming, mark as "Unreceived"
       if (statusLower === 'available' || 
           statusLower === 'availabe' || 
           statusLower === 'availble' || 
@@ -29,7 +29,7 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
           statusLower === 'avaible' ||
           statusLower === 'aviable' ||
           statusLower === 'avialable') {
-        displayStatus = 'UNRECEIVED AVAILABLE';
+        displayStatus = 'UNRECEIVED';
       }
       // For all other statuses (booked, received advance, invoiced, etc.), 
       // keep the original status from sheets as it takes precedence
@@ -37,7 +37,7 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
     
     const displayStatusLower = displayStatus.toLowerCase();
     
-    if (displayStatusLower.includes('unreceived available')) return 'bg-light-yellow text-light-yellow-foreground';
+    if (displayStatusLower.includes('unreceived')) return 'bg-light-yellow text-light-yellow-foreground';
     if (displayStatusLower.includes('available')) return 'bg-light-green text-light-green-foreground';
     if (displayStatusLower.includes('booked')) return 'bg-yellow text-yellow-foreground';
     if (displayStatusLower.includes('sold')) return 'bg-dark-blue text-dark-blue-foreground';
@@ -68,7 +68,7 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
                     statusLower === 'avaible' ||
                     statusLower === 'aviable' ||
                     statusLower === 'avialable') {
-                  return 'UNRECEIVED AVAILABLE';
+                  return 'UNRECEIVED';
                 }
               }
               return car.status;
