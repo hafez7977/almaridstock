@@ -28,9 +28,12 @@ const App = () => {
     }
 
     CapApp.addListener('appUrlOpen', async ({ url }) => {
-      console.log('App URL opened:', url);
+      console.log('🔗 App URL opened:', url);
       
-      if (url && url.includes('login-callback')) {
+      // Handle OAuth callback URLs for Google auth
+      if (url && (url.includes('auth/callback') || url.includes('#access_token') || url.includes('app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://'))) {
+        console.log('🔐 OAuth callback detected, processing...', url);
+        
         // Close the in-app browser when returning from OAuth
         if (Capacitor.isNativePlatform()) {
           try {
@@ -40,14 +43,8 @@ const App = () => {
           }
         }
 
-        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-
-        if (error) {
-          console.error('Login exchange failed:', error.message);
-        } else {
-          console.log('Login successful:', data.session);
-          // The auth state change will handle the UI update
-        }
+        // Let Supabase handle the OAuth callback automatically
+        // The auth state change listener in GoogleAuthContext will handle the session update
       }
     });
 

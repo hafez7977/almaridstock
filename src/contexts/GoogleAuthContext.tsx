@@ -137,9 +137,15 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
     
     try {
+      // Use custom URL scheme for native app OAuth
+      const redirectTo = Capacitor.isNativePlatform() 
+        ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
+        : `${window.location.origin}/auth/callback`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          redirectTo,
           scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
           queryParams: {
             access_type: 'offline',
