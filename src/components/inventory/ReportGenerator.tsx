@@ -54,6 +54,11 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
     const availableAndBookedCars = cars.filter(car => {
       const cleanStatus = car.status.toLowerCase().trim();
       
+      // For KSA, exclude cars with incoming location
+      if (tabName === 'KSA' && car.place?.toLowerCase() === 'incoming') {
+        return false;
+      }
+      
       // Available cars
       const isAvailable = cleanStatus === 'available' || 
                          cleanStatus === 'availabe' || 
