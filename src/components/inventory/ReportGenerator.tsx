@@ -59,12 +59,8 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       
       console.log(`Car ${car.sn}: status="${car.status}", place="${car.place}", cleanStatus="${cleanStatus}", cleanPlace="${cleanPlace}"`);
       
-      // For KSA, exclude cars with incoming location (check various cases)
-      if (tabName === 'KSA' && (
-        cleanPlace === 'incoming' || 
-        cleanPlace.includes('incoming') ||
-        car.place?.toLowerCase().includes('incoming')
-      )) {
+      // For KSA, ALWAYS exclude cars with incoming location regardless of case
+      if (tabName === 'KSA' && cleanPlace.includes('incoming')) {
         console.log(`Excluding car ${car.sn} - incoming location (place: "${car.place}")`);
         return false;
       }
