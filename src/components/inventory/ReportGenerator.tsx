@@ -3,6 +3,8 @@ import { Car } from "@/types/car";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ExcelJS from 'exceljs';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
 interface ReportGeneratorProps {
   cars: Car[];
@@ -238,25 +240,57 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
 
     // Generate buffer and download
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-    });
+    const fileName = `${tabName}_Available_Booked_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
     
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${tabName}_Available_Booked_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Check if running on mobile device
+    if (Capacitor.isNativePlatform()) {
+      try {
+        // Convert buffer to base64 for mobile file system
+        const base64Data = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        
+        // Save file to Documents directory on mobile
+        await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8
+        });
 
-    toast({
-      title: "Report Generated",
-      description: `Exported ${sortedCars.length} available and booked cars from ${tabName} tab with colored rows.`
-    });
+        toast({
+          title: "Report Saved",
+          description: `Report saved to Documents folder: ${fileName}`
+        });
+      } catch (error) {
+        console.error('Error saving file on mobile:', error);
+        toast({
+          title: "Save Failed",
+          description: "Could not save file to device storage",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Web browser download
+      const blob = new Blob([buffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Report Generated",
+        description: `Exported ${sortedCars.length} available and booked cars from ${tabName} tab with colored rows.`
+      });
+    }
+
   };
 
   return (
