@@ -59,6 +59,11 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
         return false;
       }
       
+      // For KSA, exclude UNRECEIVED status
+      if (tabName === 'KSA' && car.status === 'UNRECEIVED') {
+        return false;
+      }
+      
       // Available cars
       const isAvailable = cleanStatus === 'available' || 
                          cleanStatus === 'availabe' || 
@@ -66,7 +71,7 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
                          cleanStatus === 'avaliable' ||
                          cleanStatus.includes('available');
       
-      // Booked cars (including RECEIVED ADV, but exclude UNRECEIVED for KSA)
+      // Booked cars (including RECEIVED ADV)
       const isBooked = cleanStatus === 'booked' || 
                       cleanStatus === 'bookd' || 
                       cleanStatus === 'booket' ||
@@ -76,11 +81,6 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
                       cleanStatus.includes('received advance') ||
                       cleanStatus.includes('recieved adv') ||
                       (cleanStatus.includes('received') && cleanStatus.includes('adv'));
-      
-      // For KSA, exclude UNRECEIVED status
-      if (tabName === 'KSA' && car.status === 'UNRECEIVED') {
-        return false;
-      }
       
       // For Stock, include UNRECEIVED in booked category
       if (tabName === 'Stock' && car.status === 'UNRECEIVED') {
