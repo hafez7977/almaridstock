@@ -245,27 +245,48 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
     // Check if running on mobile device
     if (Capacitor.isNativePlatform()) {
       try {
-        // Convert buffer to base64 for mobile file system
-        const base64Data = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        // Convert ArrayBuffer to base64 properly for mobile
+        const uint8Array = new Uint8Array(buffer);
+        const binaryString = uint8Array.reduce((data, byte) => data + String.fromCharCode(byte), '');
+        const base64Data = btoa(binaryString);
         
         // Save file to Documents directory on mobile
-        await Filesystem.writeFile({
+        const result = await Filesystem.writeFile({
           path: fileName,
           data: base64Data,
           directory: Directory.Documents,
           encoding: Encoding.UTF8
         });
 
+        console.log('File saved successfully:', result);
+        
         toast({
           title: "Report Saved",
-          description: `Report saved to Documents folder: ${fileName}`
+          description: `Report saved to Documents folder: ${fileName}`,
         });
       } catch (error) {
         console.error('Error saving file on mobile:', error);
+        
+        // Fallback to web download if mobile save fails
+        const blob = new Blob([buffer], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
         toast({
-          title: "Save Failed",
-          description: "Could not save file to device storage",
-          variant: "destructive"
+          title: "Download Started",
+          description: `Downloading ${fileName} to your device`,
         });
       }
     } else {
@@ -284,10 +305,11 @@ export const ReportGenerator = ({ cars, tabName }: ReportGeneratorProps) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Report Generated",
-        description: `Exported ${sortedCars.length} available and booked cars from ${tabName} tab with colored rows.`
+        description: `Exported ${sortedCars.length} available and booked cars from ${tabName} tab.`
       });
     }
 
