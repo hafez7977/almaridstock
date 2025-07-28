@@ -108,18 +108,32 @@ export const CarTable = ({ cars, title, onCarUpdate, isKsaTab = false }: CarTabl
     
     // KSA tab specific logic for incoming cars
     if (isKsaTab && car?.place?.toLowerCase() === 'incoming') {
-      // If car is available, show as UNRECEIVED
+      // If car is exactly "available" and location is incoming, mark as "Unreceived Available"
       if (cleanStatus === 'available' || 
           cleanStatus === 'availabe' || 
           cleanStatus === 'availble' || 
           cleanStatus === 'avaliable' ||
-          cleanStatus.includes('available')) {
-        displayStatus = 'UNRECEIVED';
+          cleanStatus === 'availabel' ||
+          cleanStatus === 'avalable' ||
+          cleanStatus === 'avaible' ||
+          cleanStatus === 'aviable' ||
+          cleanStatus === 'avialable') {
+        displayStatus = 'UNRECEIVED AVAILABLE';
       }
-      // For all other statuses, keep original status from sheets
+      // For all other statuses (booked, received advance, invoiced, etc.), 
+      // keep the original status from sheets as it takes precedence
     }
     
     const cleanDisplayStatus = displayStatus.toLowerCase().trim();
+    
+    // Check for Unreceived Available status first
+    if (cleanDisplayStatus.includes('unreceived available')) {
+      return (
+        <Badge className="bg-light-yellow text-light-yellow-foreground">
+          {displayStatus}
+        </Badge>
+      );
+    }
     
     // Check for Available (with misspellings)
     if (cleanDisplayStatus === 'available' || 

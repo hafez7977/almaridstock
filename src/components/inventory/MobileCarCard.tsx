@@ -19,15 +19,25 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
     
     // KSA tab specific logic for incoming cars
     if (isKsaTab && car.place?.toLowerCase() === 'incoming') {
-      // If car is available, show as UNRECEIVED
-      if (statusLower.includes('available')) {
-        displayStatus = 'UNRECEIVED';
+      // If car is exactly "available" and location is incoming, mark as "Unreceived Available"
+      if (statusLower === 'available' || 
+          statusLower === 'availabe' || 
+          statusLower === 'availble' || 
+          statusLower === 'avaliable' ||
+          statusLower === 'availabel' ||
+          statusLower === 'avalable' ||
+          statusLower === 'avaible' ||
+          statusLower === 'aviable' ||
+          statusLower === 'avialable') {
+        displayStatus = 'UNRECEIVED AVAILABLE';
       }
-      // For all other statuses, keep original status from sheets
+      // For all other statuses (booked, received advance, invoiced, etc.), 
+      // keep the original status from sheets as it takes precedence
     }
     
     const displayStatusLower = displayStatus.toLowerCase();
     
+    if (displayStatusLower.includes('unreceived available')) return 'bg-light-yellow text-light-yellow-foreground';
     if (displayStatusLower.includes('available')) return 'bg-light-green text-light-green-foreground';
     if (displayStatusLower.includes('booked')) return 'bg-yellow text-yellow-foreground';
     if (displayStatusLower.includes('sold')) return 'bg-dark-blue text-dark-blue-foreground';
@@ -46,7 +56,23 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
             <p className="text-sm text-gray-500">SN: {car.sn}</p>
           </div>
           <Badge className={cn("ml-2 shrink-0 text-xs px-2 py-1", getStatusColor(car.status))}>
-            {isKsaTab && car.place?.toLowerCase() === 'incoming' && car.status.toLowerCase().includes('available') ? 'UNRECEIVED' : car.status}
+            {(() => {
+              const statusLower = car.status.toLowerCase();
+              if (isKsaTab && car.place?.toLowerCase() === 'incoming') {
+                if (statusLower === 'available' || 
+                    statusLower === 'availabe' || 
+                    statusLower === 'availble' || 
+                    statusLower === 'avaliable' ||
+                    statusLower === 'availabel' ||
+                    statusLower === 'avalable' ||
+                    statusLower === 'avaible' ||
+                    statusLower === 'aviable' ||
+                    statusLower === 'avialable') {
+                  return 'UNRECEIVED AVAILABLE';
+                }
+              }
+              return car.status;
+            })()}
           </Badge>
         </div>
 
