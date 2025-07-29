@@ -298,9 +298,41 @@ class GoogleSheetsService {
           console.log('Incoming tab - Set description from column F:', row[5]);
         }
 
+        // Tab-specific column mapping for Customer Details
+        // Stock tab: Customer is typically in column O (index 14) 
+        // Incoming tab: Customer is typically in column N (index 13)
+        if (tabType === 'stock' && row[14] && !car.customerDetails) {
+          car.customerDetails = row[14];
+          console.log('Stock tab - Set customer from column O (index 14):', row[14]);
+        } else if (tabType === 'incoming' && row[13] && !car.customerDetails) {
+          car.customerDetails = row[13];
+          console.log('Incoming tab - Set customer from column N (index 13):', row[13]);
+        }
+
+        // Additional fallback mapping for Customer Details if not found by header matching
+        // Check common column positions where customer data might be located
+        if (!car.customerDetails) {
+          // Try columns that commonly contain customer information
+          const customerCandidates = [row[13], row[14], row[15]]; // Common positions
+          for (let i = 0; i < customerCandidates.length; i++) {
+            if (customerCandidates[i] && customerCandidates[i].trim() !== '') {
+              // Simple heuristic: if it looks like customer data (not numeric, not status words)
+              const candidate = customerCandidates[i].toLowerCase().trim();
+              if (!['available', 'booked', 'sold', 'unreceived', 'invoiced', 'shipped'].includes(candidate) &&
+                  !/^\d+$/.test(candidate) && // Not just numbers
+                  candidate.length > 2) { // Has meaningful content
+                car.customerDetails = customerCandidates[i];
+                console.log(`Fallback customer mapping from column ${13 + i}:`, customerCandidates[i]);
+                break;
+              }
+            }
+          }
+        }
+
         // Debug: show final car object for first row
         if (index === 0) {
           console.log('Final car object for first row:', car);
+          console.log('Customer Details specifically:', car.customerDetails);
         }
 
         return car as Car;
