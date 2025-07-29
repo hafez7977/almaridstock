@@ -31,7 +31,68 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     deals: [] // Deal codes
   });
 
-  // Extract unique values from cars data with safety checks
+  // Helper function to apply filters to get the current filtered dataset
+  const getFilteredCars = (currentFilters: MultiFilters, safeCars: Car[]): Car[] => {
+    return safeCars.filter(car => {
+      // Search filter
+      const matchesSearch = !currentFilters.search || 
+        car.chassisNo?.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
+        car.barCode?.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
+        car.name?.toLowerCase().includes(currentFilters.search.toLowerCase()) ||
+        car.specCode?.toLowerCase().includes(currentFilters.search.toLowerCase());
+      
+      // Status filter with normalization
+      const matchesStatus = currentFilters.statuses.length === 0 || currentFilters.statuses.some(selectedStatus => {
+        switch (selectedStatus) {
+          case 'Available':
+            return isAvailable(car.status);
+          case 'Booked':
+            return isBooked(car.status) || 
+                   car.status?.toLowerCase() === 'unreceived' || 
+                   car.status === 'UNRECEIVED' ||
+                   car.status?.toLowerCase().includes('received adv') ||
+                   car.status?.toLowerCase().includes('receved adv') ||
+                   car.status?.toLowerCase().includes('received advance') ||
+                   car.status?.toLowerCase().includes('recieved adv') ||
+                   (car.status?.toLowerCase().includes('received') && car.status?.toLowerCase().includes('adv'));
+          case 'Sold':
+            return car.status?.toLowerCase().includes('sold') || 
+                   car.status?.toLowerCase() === 'sol' || 
+                   car.status?.toLowerCase() === 'sould';
+          case 'Received Full':
+            return car.status?.toLowerCase().includes('received') && 
+                   car.status?.toLowerCase().includes('full');
+          case 'Received ADV':
+            return car.status?.toLowerCase().includes('received') && 
+                   car.status?.toLowerCase().includes('adv');
+          case 'Invoiced':
+            return car.status?.toLowerCase().includes('invoiced') || 
+                   car.status?.toLowerCase() === 'invocied' || 
+                   car.status?.toLowerCase() === 'invoicd';
+          default:
+            return car.status === selectedStatus;
+        }
+      });
+      
+      // All other filter checks
+      const matchesModel = currentFilters.models.length === 0 || currentFilters.models.includes(car.name || '');
+      const matchesBarcode = currentFilters.barcodes.length === 0 || currentFilters.barcodes.includes(car.barCode || '');
+      const matchesDescription = currentFilters.descriptions.length === 0 || currentFilters.descriptions.includes(car.description || '');
+      const matchesYear = currentFilters.years.length === 0 || currentFilters.years.includes(car.model || '');
+      const matchesColor = currentFilters.colorsExt.length === 0 || currentFilters.colorsExt.includes(car.colourExt || '');
+      const matchesInterior = currentFilters.colorsInt.length === 0 || currentFilters.colorsInt.includes(car.colourInt || '');
+      const matchesSpecCode = currentFilters.specCodes.length === 0 || currentFilters.specCodes.includes(car.specCode || '');
+      const matchesBranch = currentFilters.branches.length === 0 || currentFilters.branches.includes(car.branch || '');
+      const matchesSP = currentFilters.sp.length === 0 || currentFilters.sp.includes(car.sp || '');
+      const matchesDeal = currentFilters.deals.length === 0 || currentFilters.deals.includes(car.deal || '');
+      
+      return matchesSearch && matchesStatus && matchesModel && matchesBarcode && matchesDescription && 
+             matchesYear && matchesColor && matchesInterior && matchesSpecCode && matchesBranch && 
+             matchesSP && matchesDeal;
+    });
+  };
+
+  // Extract unique values from filtered cars data (Excel-like cascading filters)
   const uniqueValues = useMemo(() => {
     console.log('Computing uniqueValues with cars:', cars);
     
@@ -65,39 +126,49 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       // Return original status if no pattern matches
       return status;
     };
-    
-    const rawStatuses = safeCars.map(car => car?.status).filter(Boolean);
-    const normalizedStatuses = [...new Set(rawStatuses.map(normalizeStatus))];
-    
-    // Extract unique values for all filters
-    const carNames = [...new Set(safeCars.map(car => car?.name).filter(Boolean))];
-    const barcodes = [...new Set(safeCars.map(car => car?.barCode).filter(Boolean))];
-    const descriptions = [...new Set(safeCars.map(car => car?.description).filter(Boolean))];
-    const years = [...new Set(safeCars.map(car => car?.model).filter(Boolean))];
-    const colorsExt = [...new Set(safeCars.map(car => car?.colourExt).filter(Boolean))];
-    const colorsInt = [...new Set(safeCars.map(car => car?.colourInt).filter(Boolean))];
-    const specCodes = [...new Set(safeCars.map(car => car?.specCode).filter(Boolean))];
-    const branches = [...new Set(safeCars.map(car => car?.branch).filter(Boolean))];
-    const sp = [...new Set(safeCars.map(car => car?.sp).filter(Boolean))];
-    const deals = [...new Set(safeCars.map(car => car?.deal).filter(Boolean))];
+
+    // For cascading filters, we need to compute available options for each filter
+    // based on the current state of other filters (excluding the filter we're computing)
+    const computeAvailableOptions = (excludeFilter: string) => {
+      // Create a temporary filter state excluding the current filter being computed
+      const tempFilters = { ...filters };
+      (tempFilters as any)[excludeFilter] = excludeFilter === 'search' ? '' : [];
+      
+      // Get cars filtered by all filters except the one we're computing
+      const filteredCars = getFilteredCars(tempFilters, safeCars);
+      
+      return {
+        statuses: [...new Set(filteredCars.map(car => car?.status).filter(Boolean).map(normalizeStatus))].sort(),
+        models: [...new Set(filteredCars.map(car => car?.name).filter(Boolean))].sort(),
+        barcodes: [...new Set(filteredCars.map(car => car?.barCode).filter(Boolean))].sort(),
+        descriptions: [...new Set(filteredCars.map(car => car?.description).filter(Boolean))].sort(),
+        years: [...new Set(filteredCars.map(car => car?.model).filter(Boolean))].sort(),
+        colorsExt: [...new Set(filteredCars.map(car => car?.colourExt).filter(Boolean))].sort(),
+        colorsInt: [...new Set(filteredCars.map(car => car?.colourInt).filter(Boolean))].sort(),
+        specCodes: [...new Set(filteredCars.map(car => car?.specCode).filter(Boolean))].sort(),
+        branches: [...new Set(filteredCars.map(car => car?.branch).filter(Boolean))].sort(),
+        sp: [...new Set(filteredCars.map(car => car?.sp).filter(Boolean))].sort(),
+        deals: [...new Set(filteredCars.map(car => car?.deal).filter(Boolean))].sort(),
+      };
+    };
 
     const result = {
-      statuses: normalizedStatuses.sort(),
-      models: carNames.sort(),
-      barcodes: barcodes.sort(),
-      descriptions: descriptions.sort(),
-      years: years.sort(),
-      colorsExt: colorsExt.sort(),
-      colorsInt: colorsInt.sort(),
-      specCodes: specCodes.sort(),
-      branches: branches.sort(),
-      sp: sp.sort(),
-      deals: deals.sort(),
+      statuses: computeAvailableOptions('statuses').statuses,
+      models: computeAvailableOptions('models').models,
+      barcodes: computeAvailableOptions('barcodes').barcodes,
+      descriptions: computeAvailableOptions('descriptions').descriptions,
+      years: computeAvailableOptions('years').years,
+      colorsExt: computeAvailableOptions('colorsExt').colorsExt,
+      colorsInt: computeAvailableOptions('colorsInt').colorsInt,
+      specCodes: computeAvailableOptions('specCodes').specCodes,
+      branches: computeAvailableOptions('branches').branches,
+      sp: computeAvailableOptions('sp').sp,
+      deals: computeAvailableOptions('deals').deals,
     };
     
-    console.log('UniqueValues result:', result);
+    console.log('UniqueValues result (cascading):', result);
     return result;
-  }, [cars]);
+  }, [cars, filters]);
 
   const handleSearchChange = (value: string) => {
     const newFilters = { ...filters, search: value };
