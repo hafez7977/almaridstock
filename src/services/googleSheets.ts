@@ -232,7 +232,8 @@ class GoogleSheetsService {
             car.barCode = value;
           } else if (headerLower.includes('model')) {
             car.model = value;
-          } else if (headerLower.includes('spec') && headerLower.includes('code')) {
+          } else if (headerLower.includes('spec')) {
+            // More flexible matching for spec code variations
             car.specCode = value;
           } else if (headerLower === 'description' || headerLower === 'desc' || 
                      headerLower.includes('description') || headerLower.includes('desc') || 
@@ -257,18 +258,23 @@ class GoogleSheetsService {
           } else if (headerLower.includes('supplier')) {
             car.supplier = value;
           } else if (headerLower.includes('branch')) {
+            // More flexible matching for branch variations
             car.branch = value;
           } else if (headerLower.includes('place') || headerLower.includes('location')) {
             car.place = value;
-          } else if (headerLower.includes('customer')) {
+          } else if (headerLower.includes('customer') || headerLower.includes('cust')) {
+            // More flexible matching for customer variations
             car.customerDetails = value;
-          } else if (headerLower === 'sp') {
+          } else if (headerLower === 'sp' || headerLower.includes('sp') || 
+                     headerLower === 's.p' || headerLower === 's/p') {
+            // More flexible matching for SP variations
             car.sp = value;
-          } else if (headerLower === 'sd' || headerLower === 's/d') {
+          } else if (headerLower === 'sd' || headerLower === 's/d' || headerLower === 's.d') {
             car.sd = value;
           } else if (headerLower.includes('inv') && (headerLower.includes('no') || headerLower.includes('#'))) {
             car.invNo = value;
-          } else if (headerLower.includes('ampi')) {
+          } else if (headerLower.includes('ampi') || headerLower.includes('amp')) {
+            // More flexible matching for AMPI variations
             car.ampi = value;
           } else if (headerLower.includes('paper')) {
             car.paper = value;
