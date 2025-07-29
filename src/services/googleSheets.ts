@@ -201,7 +201,32 @@ class GoogleSheetsService {
         if (!row || row.every(cell => !cell || cell.trim() === '')) {
           return false;
         }
-        return true;
+        
+        // Skip rows that are essentially empty (only contain dashes or reference codes)
+        const nonEmptyValues = row.filter(cell => 
+          cell && 
+          cell.trim() !== '' && 
+          cell.trim() !== '-' && 
+          cell.trim() !== 'N/A' && 
+          cell.trim() !== 'n/a'
+        );
+        
+        // If there's only one non-empty value and it looks like a reference code, skip it
+        if (nonEmptyValues.length <= 1) {
+          const firstValue = nonEmptyValues[0];
+          if (firstValue && (
+            firstValue.includes('-') && 
+            (firstValue.includes('WAI') || firstValue.includes('ADM') || firstValue.includes('AGMC') || 
+             firstValue.match(/[A-Z]{2,4}-\d+/) || // Pattern like "ADM-16" or "WAI-283"
+             firstValue.match(/[A-Z]+-[A-Z]+-\d+/)) // Pattern like "WAI-AUG-24"
+          )) {
+            console.log('Skipping reference row:', firstValue);
+            return false;
+          }
+        }
+        
+        // Require at least 2 meaningful data points to consider it a valid car row
+        return nonEmptyValues.length >= 2;
       })
       .map((row, index) => {
         const car: any = { id: `sheet_${index}` };
