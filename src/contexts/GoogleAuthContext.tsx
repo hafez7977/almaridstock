@@ -106,25 +106,37 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       }
     );
 
-    // THEN get initial session
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      console.log('📍 Initial session check:', { 
-        hasSession: !!session, 
-        hasUser: !!session?.user,
-        userEmail: session?.user?.email,
-        error: error?.message,
-        providerToken: !!session?.provider_token
-      });
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-      
-      if (session?.provider_token) {
-        await setStorageItem('google_access_token', session.provider_token);
-        console.log('✅ Stored Google provider token from initial session');
+    // THEN get initial session with better error handling
+    const initializeSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        console.log('📍 Initial session check:', { 
+          hasSession: !!session, 
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+          error: error?.message,
+          providerToken: !!session?.provider_token
+        });
+        
+        if (session?.provider_token) {
+          await setStorageItem('google_access_token', session.provider_token);
+          console.log('✅ Stored Google provider token from initial session');
+        }
+        
+        // Only set loading to false after we've processed the session
+        if (!error) {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (err) {
+        console.error('❌ Failed to initialize session:', err);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+
+    initializeSession();
 
     return () => {
       console.log('🔌 Cleaning up auth listener');
@@ -149,7 +161,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
           scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            // Only prompt consent if user is not already authenticated
+            // This allows for persistent sessions without re-authentication
           }
         }
       });

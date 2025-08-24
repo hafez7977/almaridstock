@@ -32,11 +32,11 @@ class GoogleAuthService {
     console.log('Starting Google sign-in process for mobile (Supabase OAuth)...');
     
     try {
-      // For mobile apps, we need to use the custom URL scheme
+      // For mobile apps, we need to use the custom URL scheme  
       const isCapacitor = window.location.protocol === 'capacitor:';
       const redirectTo = isCapacitor 
-        ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://oauth/callback'
-        : window.location.origin;
+        ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
+        : `${window.location.origin}/auth/callback`;
 
       console.log('Detected environment:', isCapacitor ? 'mobile' : 'web');
       console.log('Using redirect URL:', redirectTo);
@@ -48,7 +48,7 @@ class GoogleAuthService {
           redirectTo,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            // Removed prompt: 'consent' to allow persistent sessions
           }
         }
       });
