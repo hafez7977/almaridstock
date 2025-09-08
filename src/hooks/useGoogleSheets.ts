@@ -29,7 +29,7 @@ export const useGoogleSheets = () => {
       }
     },
     enabled: isAuthenticated && !!spreadsheetId,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
   });
 
   // Query for incoming cars
@@ -51,7 +51,7 @@ export const useGoogleSheets = () => {
       }
     },
     enabled: isAuthenticated && !!spreadsheetId,
-    refetchInterval: 30000,
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
   // Query for KSA cars
@@ -74,7 +74,7 @@ export const useGoogleSheets = () => {
       }
     },
     enabled: isAuthenticated && !!spreadsheetId,
-    refetchInterval: 30000,
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
   // Query for logs
@@ -97,7 +97,7 @@ export const useGoogleSheets = () => {
       }
     },
     enabled: isAuthenticated && !!spreadsheetId,
-    refetchInterval: 30000,
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
   // Mutation to update car data
