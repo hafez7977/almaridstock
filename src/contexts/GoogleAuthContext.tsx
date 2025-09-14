@@ -106,37 +106,32 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       }
     );
 
-    // THEN get initial session with better error handling
-    const initializeSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        console.log('📍 Initial session check:', { 
-          hasSession: !!session, 
-          hasUser: !!session?.user,
-          userEmail: session?.user?.email,
-          error: error?.message,
-          providerToken: !!session?.provider_token
-        });
-        
-        if (session?.provider_token) {
-          await setStorageItem('google_access_token', session.provider_token);
-          console.log('✅ Stored Google provider token from initial session');
-        }
-        
-        // Only set loading to false after we've processed the session
-        if (!error) {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
-      } catch (err) {
-        console.error('❌ Failed to initialize session:', err);
-      } finally {
+    // THEN get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📍 Initial session check:', { 
+        hasSession: !!session, 
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        error: error?.message,
+        providerToken: !!session?.provider_token
+      });
+      
+      // Store token if available
+      if (session?.provider_token) {
+        setStorageItem('google_access_token', session.provider_token);
+        console.log('✅ Stored Google provider token from initial session');
+      }
+      
+      // Set initial state only if auth listener hasn't fired yet
+      if (isLoading) {
+        setSession(session);
+        setUser(session?.user ?? null);
         setIsLoading(false);
       }
-    };
-
-    initializeSession();
+    }).catch(err => {
+      console.error('❌ Failed to get initial session:', err);
+      setIsLoading(false);
+    });
 
     return () => {
       console.log('🔌 Cleaning up auth listener');
