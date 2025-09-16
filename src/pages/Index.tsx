@@ -70,7 +70,7 @@ const Index = () => {
     deals: []
   });
 
-  const { isAuthenticated, spreadsheetId } = useGoogleAuth();
+  const { isAuthenticated, spreadsheetId, signIn } = useGoogleAuth();
   const { isAdmin } = useAdmin();
   const { 
     stockCars, 
@@ -507,6 +507,8 @@ const Index = () => {
 
   // Show error state
   if (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load data from Google Sheets';
+    const needsLogin = /no access token/i.test(message);
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -517,10 +519,10 @@ const Index = () => {
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                {error instanceof Error ? error.message : 'Failed to load data from Google Sheets'}
+                {message}
               </p>
-              <Button onClick={() => window.location.reload()} className="w-full">
-                Try Again
+              <Button onClick={() => (needsLogin ? signIn() : window.location.reload())} className="w-full">
+                {needsLogin ? 'Sign in with Google' : 'Try Again'}
               </Button>
             </CardContent>
           </Card>
