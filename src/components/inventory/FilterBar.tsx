@@ -28,7 +28,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     specCodes: [],
     branches: [],
     sp: [],
-    deals: [] // Deal codes
+    deals: [], // Deal codes
+    locations: [] // Location/place filter
   });
 
   // Helper function to apply filters to get the current filtered dataset
@@ -85,10 +86,11 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       const matchesBranch = currentFilters.branches.length === 0 || currentFilters.branches.includes(car.branch || '');
       const matchesSP = currentFilters.sp.length === 0 || currentFilters.sp.includes(car.sp || '');
       const matchesDeal = currentFilters.deals.length === 0 || currentFilters.deals.includes(car.deal || '');
+      const matchesLocation = currentFilters.locations.length === 0 || currentFilters.locations.includes(car.place || '');
       
       return matchesSearch && matchesStatus && matchesModel && matchesBarcode && matchesDescription && 
              matchesYear && matchesColor && matchesInterior && matchesSpecCode && matchesBranch && 
-             matchesSP && matchesDeal;
+             matchesSP && matchesDeal && matchesLocation;
     });
   };
 
@@ -149,6 +151,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
         branches: [...new Set(filteredCars.map(car => car?.branch).filter(Boolean))].sort(),
         sp: [...new Set(filteredCars.map(car => car?.sp).filter(Boolean))].sort(),
         deals: [...new Set(filteredCars.map(car => car?.deal).filter(Boolean))].sort(),
+        locations: [...new Set(filteredCars.map(car => car?.place).filter(Boolean))].sort(),
       };
     };
 
@@ -164,6 +167,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       branches: computeAvailableOptions('branches').branches,
       sp: computeAvailableOptions('sp').sp,
       deals: computeAvailableOptions('deals').deals,
+      locations: computeAvailableOptions('locations').locations,
     };
     
     console.log('UniqueValues result (cascading):', result);
@@ -195,7 +199,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       specCodes: [],
       branches: [],
       sp: [],
-      deals: []
+      deals: [],
+      locations: []
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
@@ -212,7 +217,8 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
     filters.specCodes.length > 0 ||
     filters.branches.length > 0 || 
     filters.sp.length > 0 ||
-    filters.deals.length > 0;
+    filters.deals.length > 0 ||
+    filters.locations.length > 0;
 
   return (
     <Card className="mb-6">
@@ -317,6 +323,14 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
               className="w-full lg:w-40"
             />
 
+            <MultiSelect
+              options={uniqueValues.locations}
+              selected={filters.locations}
+              onChange={(values) => handleMultiSelectChange('locations', values)}
+              placeholder="Location"
+              className="w-full lg:w-40"
+            />
+
             {hasActiveFilters && (
               <Button variant="outline" size="sm" onClick={clearFilters} className="col-span-2 sm:col-span-1">
                 <X className="h-4 w-4 mr-1" />
@@ -342,6 +356,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
                 filters.branches.length > 0 && `Branch: ${filters.branches.length} selected`,
                 filters.sp.length > 0 && `SP: ${filters.sp.length} selected`,
                 filters.deals.length > 0 && `Deal: ${filters.deals.length} selected`,
+                filters.locations.length > 0 && `Location: ${filters.locations.length} selected`,
               ].filter(Boolean).join(', ')
             }
           </div>

@@ -13,6 +13,7 @@ export interface MultiFilters {
   branches: string[];
   sp: string[];
   deals: string[]; // Deal codes
+  locations: string[]; // Location/place filter
 }
 
 // Helper functions to check status types with misspelling tolerance
@@ -113,10 +114,11 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
     const matchesBranch = filters.branches.length === 0 || filters.branches.includes(car.branch || '');
     const matchesSP = filters.sp.length === 0 || filters.sp.includes(car.sp || '');
     const matchesDeal = filters.deals.length === 0 || filters.deals.includes(car.deal || '');
+    const matchesLocation = filters.locations.length === 0 || filters.locations.includes(car.place || '');
     
     return matchesSearch && matchesStatus && matchesModel && matchesBarcode && matchesDescription && 
            matchesYear && matchesColor && matchesInterior && matchesSpecCode && matchesBranch && 
-           matchesSP && matchesDeal;
+           matchesSP && matchesDeal && matchesLocation;
   });
 };
 
