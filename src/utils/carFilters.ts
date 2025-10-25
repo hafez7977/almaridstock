@@ -76,14 +76,16 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
         case 'Available':
           return isAvailable(car.status);
         case 'Booked':
-          return isBooked(car.status) || 
-                 car.status?.toLowerCase() === 'unreceived' || 
-                 car.status === 'UNRECEIVED' ||
-                 car.status?.toLowerCase().includes('received adv') ||
+          return isBooked(car.status);
+        case 'Received ADV':
+          return car.status?.toLowerCase().includes('received adv') ||
                  car.status?.toLowerCase().includes('receved adv') ||
                  car.status?.toLowerCase().includes('received advance') ||
                  car.status?.toLowerCase().includes('recieved adv') ||
                  (car.status?.toLowerCase().includes('received') && car.status?.toLowerCase().includes('adv'));
+        case 'UNRECEIVED':
+          return car.status?.toLowerCase() === 'unreceived' || 
+                 car.status === 'UNRECEIVED';
         case 'Sold':
           return car.status?.toLowerCase().includes('sold') || 
                  car.status?.toLowerCase() === 'sol' || 
@@ -91,9 +93,6 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
         case 'Received Full':
           return car.status?.toLowerCase().includes('received') && 
                  car.status?.toLowerCase().includes('full');
-        case 'Received ADV':
-          return car.status?.toLowerCase().includes('received') && 
-                 car.status?.toLowerCase().includes('adv');
         case 'Invoiced':
           return car.status?.toLowerCase().includes('invoiced') || 
                  car.status?.toLowerCase() === 'invocied' || 
