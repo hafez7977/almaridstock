@@ -11,6 +11,7 @@ interface SPTrackerProps {
 interface SPStats {
   sp: string;
   booked: number;
+  receivedAdvanced: number;
   sold: number;
   total: number;
 }
@@ -18,9 +19,11 @@ interface SPStats {
 interface SPStatsWithSets {
   sp: string;
   booked: number;
+  receivedAdvanced: number;
   sold: number;
   total: number;
   bookedDeals: Set<string>;
+  receivedAdvancedDeals: Set<string>;
   soldDeals: Set<string>;
 }
 
@@ -34,10 +37,12 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
     if (!acc[sp]) {
       acc[sp] = { 
         sp, 
-        booked: 0, 
+        booked: 0,
+        receivedAdvanced: 0,
         sold: 0, 
         total: 0,
         bookedDeals: new Set<string>(),
+        receivedAdvancedDeals: new Set<string>(),
         soldDeals: new Set<string>()
       };
     }
@@ -47,14 +52,16 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
     
     // Only count deals that have a valid deal ID and are not empty
     if (deal && deal !== '' && deal !== 'N/A' && deal !== 'n/a' && deal !== 'null') {
-      // Count as BOOKED: booked, received advance, partial payment
-      if (status === 'booked' || 
-          status === 'received advance' || 
-          status === 'partial payment' ||
-          status === 'recived advance' || // handle typos
-          status === 'recieved advance') {
+      // Count as BOOKED: only booked status
+      if (status === 'booked') {
         acc[sp].bookedDeals.add(deal);
-      } 
+      }
+      // Count as RECEIVED ADVANCED: received advance variations
+      else if (status === 'received advance' || 
+               status === 'recived advance' || // handle typos
+               status === 'recieved advance') {
+        acc[sp].receivedAdvancedDeals.add(deal);
+      }
       // Count as SOLD: everything else except available/unreceived
       else if (status !== 'available' && 
                status !== 'unreceived' && 
@@ -70,8 +77,9 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
   const processedStats = Object.values(spStats).map(stat => ({
     sp: stat.sp,
     booked: stat.bookedDeals.size,
+    receivedAdvanced: stat.receivedAdvancedDeals.size,
     sold: stat.soldDeals.size,
-    total: stat.bookedDeals.size + stat.soldDeals.size
+    total: stat.bookedDeals.size + stat.receivedAdvancedDeals.size + stat.soldDeals.size
   }));
 
   // Filter and sort by total (highest first)
@@ -80,6 +88,7 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
     .sort((a, b) => b.total - a.total);
 
   const totalBooked = sortedStats.reduce((sum, stat) => sum + stat.booked, 0);
+  const totalReceivedAdvanced = sortedStats.reduce((sum, stat) => sum + stat.receivedAdvanced, 0);
   const totalSold = sortedStats.reduce((sum, stat) => sum + stat.sold, 0);
 
   return (
@@ -97,11 +106,15 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
             <div className="text-sm text-muted-foreground">Total Booked</div>
           </div>
           <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{totalReceivedAdvanced}</div>
+            <div className="text-sm text-muted-foreground">Total Received Advanced</div>
+          </div>
+          <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{totalSold}</div>
             <div className="text-sm text-muted-foreground">Total Sold</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{totalBooked + totalSold}</div>
+            <div className="text-2xl font-bold">{totalBooked + totalReceivedAdvanced + totalSold}</div>
             <div className="text-sm text-muted-foreground">Total Deals</div>
           </div>
         </div>
@@ -116,6 +129,7 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
               <TableRow>
                 <TableHead>Sales Person</TableHead>
                 <TableHead className="text-center">Booked</TableHead>
+                <TableHead className="text-center">Received Advanced</TableHead>
                 <TableHead className="text-center">Sold</TableHead>
                 <TableHead className="text-center">Total</TableHead>
               </TableRow>
@@ -131,6 +145,14 @@ export const SPTracker = ({ cars }: SPTrackerProps) => {
                       </Badge>
                     )}
                     {stat.booked === 0 && <span className="text-muted-foreground">0</span>}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {stat.receivedAdvanced > 0 && (
+                      <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                        {stat.receivedAdvanced}
+                      </Badge>
+                    )}
+                    {stat.receivedAdvanced === 0 && <span className="text-muted-foreground">0</span>}
                   </TableCell>
                   <TableCell className="text-center">
                     {stat.sold > 0 && (
