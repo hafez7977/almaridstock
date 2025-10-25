@@ -121,6 +121,20 @@ export const filterCars = (cars: Car[], filters: MultiFilters): Car[] => {
   });
 };
 
+// Extract numeric series from car name (e.g., "BMW X5" -> 5, "BMW 840i" -> 8)
+const extractSeries = (name: string): number => {
+  const match = name?.match(/\b([X]?)(\d+)/i);
+  if (!match) return 999;
+  return parseInt(match[2]);
+};
+
+// Extract full model number for secondary sorting (e.g., "840i" -> 840, "520i" -> 520)
+const extractModelNum = (name: string): number => {
+  const match = name?.match(/\b(\d{3,4})[a-z]/i);
+  if (!match) return 0;
+  return parseInt(match[1]);
+};
+
 export const sortCarsWithPriority = (cars: Car[], tabType?: string): Car[] => {
   return [...cars].sort((a, b) => {
     const aPriority = getStatusPriority(a.status);
@@ -139,7 +153,21 @@ export const sortCarsWithPriority = (cars: Car[], tabType?: string): Car[] => {
       if (!aIsToyota && bIsToyota) return -1; // Non-Toyota goes before Toyota
     }
     
-    // Sort by name first (group same names together)
+    // Sort by series number (X5 -> 5, 8 Series -> 8, etc.) - higher series first
+    const aSeries = extractSeries(a.name || '');
+    const bSeries = extractSeries(b.name || '');
+    if (aSeries !== bSeries) {
+      return bSeries - aSeries; // Higher series first (X5 before X3, 8 Series before 5 Series)
+    }
+    
+    // Within same series, sort by full model number (840i before 830i, 530i before 520i)
+    const aModelNum = extractModelNum(a.name || '');
+    const bModelNum = extractModelNum(b.name || '');
+    if (aModelNum !== bModelNum) {
+      return bModelNum - aModelNum; // Higher model first
+    }
+    
+    // Sort by full name for remaining differentiation
     const aName = a.name?.toLowerCase() || '';
     const bName = b.name?.toLowerCase() || '';
     if (aName !== bName) {
@@ -150,7 +178,7 @@ export const sortCarsWithPriority = (cars: Car[], tabType?: string): Car[] => {
     const aModel = a.model?.toLowerCase() || '';
     const bModel = b.model?.toLowerCase() || '';
     if (aModel !== bModel) {
-      return bModel.localeCompare(aModel); // Reversed to get higher model first
+      return bModel.localeCompare(aModel);
     }
     
     // If same name and model, sort by SN
