@@ -66,7 +66,14 @@ export const PdfManager = ({ car, onUpdate }: PdfManagerProps) => {
     const link = document.createElement('a');
     link.href = pdf.data;
     link.download = pdf.name;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: `Downloading ${pdf.name}`,
+    });
   };
 
   const handleDelete = (pdfId: string) => {
