@@ -125,7 +125,7 @@ export const CarDetailModal = ({ car, onClose, onUpdate }: CarDetailModalProps) 
 
                 <div>
                   <Label>Description</Label>
-                  <Textarea value={editedCar.description} disabled className="bg-muted" />
+                  <Textarea value={editedCar.description} disabled className="bg-muted min-h-[100px] resize-none" rows={4} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -104,7 +104,7 @@ export const MobileCarCard = ({ car, onViewDetails, onSpecCodeClick, isKsaTab = 
         {car.description && (
           <div className="mb-3 p-2 bg-gray-50 rounded-md">
             <span className="text-gray-500 text-xs block">Description</span>
-            <p className="font-medium text-gray-900 text-sm">{car.description}</p>
+            <p className="font-medium text-gray-900 text-sm whitespace-pre-wrap break-words">{car.description}</p>
           </div>
         )}
 
