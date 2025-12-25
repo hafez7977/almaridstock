@@ -169,7 +169,7 @@ class GoogleAuthService {
   async getValidAccessToken(): Promise<string | null> {
     console.log('getValidAccessToken called');
     
-    // Check current session
+    // First check current session for provider_token
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session?.provider_token) {
@@ -178,11 +178,27 @@ class GoogleAuthService {
       return session.provider_token;
     }
 
-    // Try to get stored token
-    const token = this.getAccessToken();
-    if (token) {
+    // Try to get stored token first (might still be valid)
+    const storedToken = this.getAccessToken();
+    if (storedToken) {
       console.log('Returning stored token');
-      return token;
+      return storedToken;
+    }
+
+    // If user is authenticated but no provider_token, try refreshing
+    if (session?.user) {
+      console.log('User authenticated but no provider token - attempting refresh...');
+      try {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError && refreshData.session?.provider_token) {
+          localStorage.setItem('google_access_token', refreshData.session.provider_token);
+          console.log('Got provider token from session refresh');
+          return refreshData.session.provider_token;
+        }
+        console.log('Refresh did not return provider token - user may need to re-authenticate');
+      } catch (e) {
+        console.error('Session refresh failed:', e);
+      }
     }
 
     console.log('No valid token available');
