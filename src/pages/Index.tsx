@@ -68,7 +68,8 @@ const Index = () => {
     branches: [],
     sp: [],
     deals: [],
-    locations: []
+    locations: [],
+    customers: []
   });
 
   const { isAuthenticated, spreadsheetId, signIn } = useGoogleAuth();
