@@ -97,17 +97,14 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
             await setStorageItem('google_access_token', session.provider_token!);
             console.log('✅ Updated Google provider token');
           }, 0);
-        } else {
-          setTimeout(async () => {
-            await removeStorageItem('google_access_token');
-            console.log('🗑️ Removed Google provider token');
-          }, 0);
         }
+        // Don't clear the token on every auth change - only clear on explicit sign out
+        // This preserves tokens across page refreshes where provider_token isn't returned
       }
     );
 
     // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       console.log('📍 Initial session check:', { 
         hasSession: !!session, 
         hasUser: !!session?.user,
@@ -116,10 +113,18 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         providerToken: !!session?.provider_token
       });
       
-      // Store token if available
+      // Store token if available from initial session
       if (session?.provider_token) {
-        setStorageItem('google_access_token', session.provider_token);
+        await setStorageItem('google_access_token', session.provider_token);
         console.log('✅ Stored Google provider token from initial session');
+      } else if (session?.user) {
+        // If user is logged in but no provider_token, check if we have a stored one
+        const storedToken = await getStorageItem('google_access_token');
+        if (!storedToken) {
+          console.log('⚠️ User authenticated but no stored token - may need re-auth for Google API');
+        } else {
+          console.log('✅ Using stored Google access token');
+        }
       }
       
       // Set initial state only if auth listener hasn't fired yet
@@ -181,6 +186,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
     
     try {
+      // Only clear tokens on explicit sign out
       await removeStorageItem('google_access_token');
       await removeStorageItem('google_spreadsheet_id');
       
@@ -190,11 +196,15 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         throw error;
       }
       
+      setUser(null);
+      setSession(null);
+      setSpreadsheetIdState('');
       console.log('✅ Signed out successfully');
     } catch (error) {
       console.error('💥 Sign-out error:', error);
-      setIsLoading(false);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
