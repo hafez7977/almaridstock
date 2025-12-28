@@ -97,7 +97,23 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
   };
 
   // Extract unique values from filtered cars data (Excel-like cascading filters)
-  const uniqueValues = useMemo(() => {
+  interface UniqueValuesType {
+    statuses: string[];
+    models: string[];
+    barcodes: string[];
+    descriptions: string[];
+    years: string[];
+    colorsExt: string[];
+    colorsInt: string[];
+    specCodes: string[];
+    branches: string[];
+    sp: string[];
+    deals: string[];
+    locations: string[];
+    customers: string[];
+  }
+
+  const uniqueValues = useMemo<UniqueValuesType>(() => {
     console.log('Computing uniqueValues with cars:', cars);
     
     // Ensure cars is a valid array
@@ -133,7 +149,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
 
     // For cascading filters, we need to compute available options for each filter
     // based on the current state of other filters (excluding the filter we're computing)
-    const computeAvailableOptions = (excludeFilter: string) => {
+    const computeAvailableOptions = (excludeFilter: string): UniqueValuesType => {
       // Create a temporary filter state excluding the current filter being computed
       const tempFilters = { ...filters };
       (tempFilters as any)[excludeFilter] = excludeFilter === 'search' ? '' : [];
@@ -158,7 +174,7 @@ export const FilterBar = ({ cars, onFilterChange }: FilterBarProps) => {
       };
     };
 
-    const result = {
+    const result: UniqueValuesType = {
       statuses: computeAvailableOptions('statuses').statuses,
       models: computeAvailableOptions('models').models,
       barcodes: computeAvailableOptions('barcodes').barcodes,
