@@ -161,8 +161,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
           scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
           queryParams: {
             access_type: 'offline',
-            // Only prompt consent if user is not already authenticated
-            // This allows for persistent sessions without re-authentication
+            prompt: 'consent', // Force consent to get fresh provider_token
           }
         }
       });
