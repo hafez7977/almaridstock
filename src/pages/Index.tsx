@@ -507,24 +507,36 @@ const Index = () => {
     );
   }
 
-  // Show error state
+  // Show error state - if token issue, prompt for re-authentication
   if (error) {
     const message = error instanceof Error ? error.message : 'Failed to load data from Google Sheets';
-    const needsLogin = /no access token/i.test(message);
+    const needsReauth = /no access token/i.test(message);
+    
+    const handleReconnect = async () => {
+      // Clear stored token and force new OAuth with consent prompt
+      localStorage.removeItem('google_access_token');
+      localStorage.removeItem('google_token_expires_at');
+      await signIn();
+    };
+    
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-6">
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle className="text-destructive text-center">Error Loading Data</CardTitle>
+              <CardTitle className="text-destructive text-center">
+                {needsReauth ? 'Google Connection Expired' : 'Error Loading Data'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                {message}
+                {needsReauth 
+                  ? 'Your Google Sheets access has expired. Please reconnect to continue.'
+                  : message}
               </p>
-              <Button onClick={() => (needsLogin ? signIn() : window.location.reload())} className="w-full">
-                {needsLogin ? 'Sign in with Google' : 'Try Again'}
+              <Button onClick={needsReauth ? handleReconnect : () => window.location.reload()} className="w-full">
+                {needsReauth ? 'Reconnect Google Sheets' : 'Try Again'}
               </Button>
             </CardContent>
           </Card>
