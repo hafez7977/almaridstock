@@ -169,36 +169,26 @@ class GoogleAuthService {
   async getValidAccessToken(): Promise<string | null> {
     console.log('getValidAccessToken called');
     
-    // First check current session for provider_token
+    // First try to get stored token - this persists across page refreshes
+    const storedToken = this.getAccessToken();
+    if (storedToken) {
+      console.log('Returning stored token from localStorage');
+      return storedToken;
+    }
+    
+    // Check current session for provider_token (available right after OAuth)
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session?.provider_token) {
       localStorage.setItem('google_access_token', session.provider_token);
+      localStorage.setItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
       console.log('Returning valid token from Supabase session');
       return session.provider_token;
     }
 
-    // Try to get stored token first (might still be valid)
-    const storedToken = this.getAccessToken();
-    if (storedToken) {
-      console.log('Returning stored token');
-      return storedToken;
-    }
-
-    // If user is authenticated but no provider_token, try refreshing
+    // If user is authenticated but no token available, they need to re-authenticate
     if (session?.user) {
-      console.log('User authenticated but no provider token - attempting refresh...');
-      try {
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        if (!refreshError && refreshData.session?.provider_token) {
-          localStorage.setItem('google_access_token', refreshData.session.provider_token);
-          console.log('Got provider token from session refresh');
-          return refreshData.session.provider_token;
-        }
-        console.log('Refresh did not return provider token - user may need to re-authenticate');
-      } catch (e) {
-        console.error('Session refresh failed:', e);
-      }
+      console.log('User authenticated but no Google token - re-authentication required');
     }
 
     console.log('No valid token available');
