@@ -27,6 +27,18 @@ class GoogleSheetsService {
 
     if (response.status === 401) {
       console.log('Got 401 - authentication failed');
+
+      // One automatic refresh attempt, then retry the request once.
+      if (retryCount < 1) {
+        try {
+          console.log('Attempting token refresh and retry...');
+          await googleAuthService.refreshToken();
+          return this.makeRequest(url, options, retryCount + 1);
+        } catch (refreshErr) {
+          console.error('Token refresh failed:', refreshErr);
+        }
+      }
+
       let errorMessage = 'Authentication failed. Please sign in again.';
       try {
         const error = await response.json();

@@ -150,14 +150,22 @@ class GoogleAuthService {
 
   async getAccessToken(): Promise<string | null> {
     const token = await this.getStorageItem('google_access_token');
-    console.log('getAccessToken - token exists:', !!token);
+    const expiresAtRaw = await this.getStorageItem('google_token_expires_at');
 
-    if (!token) {
-      console.log('No token found in storage');
+    const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : null;
+    const isExpired = expiresAt ? Date.now() > expiresAt : false;
+
+    console.log('getAccessToken:', { hasToken: !!token, hasExpiresAt: !!expiresAtRaw, isExpired });
+
+    if (!token) return null;
+
+    // If we know it's expired, treat as missing so callers can refresh/re-auth.
+    if (isExpired) {
+      await this.removeStorageItem('google_access_token');
+      await this.removeStorageItem('google_token_expires_at');
       return null;
     }
 
-    console.log('Token is present (Supabase refresh handled separately)');
     return token;
   }
 
