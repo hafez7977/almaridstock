@@ -30,11 +30,16 @@ const App = () => {
 
     CapApp.addListener('appUrlOpen', async ({ url }) => {
       console.log('🔗 App URL opened:', url);
-      
+
       // Handle OAuth callback URLs for Google auth
-      if (url && (url.includes('auth/callback') || url.includes('#access_token') || url.includes('app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://'))) {
+      if (
+        url &&
+        (url.includes('auth/callback') ||
+          url.includes('#access_token') ||
+          url.includes('app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://'))
+      ) {
         console.log('🔐 OAuth callback detected, processing...', url);
-        
+
         // Close the in-app browser when returning from OAuth
         if (Capacitor.isNativePlatform()) {
           try {
@@ -44,8 +49,26 @@ const App = () => {
           }
         }
 
-        // Let Supabase handle the OAuth callback automatically
-        // The auth state change listener in GoogleAuthContext will handle the session update
+        try {
+          // On native, Supabase won't automatically see the deep-link URL.
+          // Exchange the PKCE code manually so the session is persisted.
+          const callbackUrl = new URL(url);
+          const code = callbackUrl.searchParams.get('code');
+
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              console.error('❌ exchangeCodeForSession failed:', error.message);
+            } else {
+              console.log('✅ Session established from native deep link');
+            }
+          }
+        } catch (err) {
+          console.error('❌ Failed to process native OAuth callback:', err);
+        } finally {
+          // Ensure the webview returns to the app
+          window.location.href = '/';
+        }
       }
     });
 
