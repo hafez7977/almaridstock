@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { Preferences } from '@capacitor/preferences';
 
 interface GoogleAuthContextType {
@@ -147,10 +148,10 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   const signIn = async () => {
     console.log('🚀 Starting Google sign-in...');
     setIsLoading(true);
-    
+
     try {
       // Use custom URL scheme for native app OAuth
-      const redirectTo = Capacitor.isNativePlatform() 
+      const redirectTo = Capacitor.isNativePlatform()
         ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
         : `${window.location.origin}/auth/callback`;
 
@@ -158,25 +159,38 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         provider: 'google',
         options: {
           redirectTo,
-          scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+          scopes:
+            'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent', // Force consent to get fresh provider_token
-          }
-        }
+            prompt: 'consent',
+          },
+          // Critical for native: keep PKCE verifier in the WebView storage,
+          // then open the OAuth URL in the system/in-app browser.
+          ...(Capacitor.isNativePlatform()
+            ? {
+                skipBrowserRedirect: true,
+              }
+            : {}),
+        },
       });
 
       if (error) {
         console.error('❌ OAuth error:', error);
-        setIsLoading(false);
         throw error;
+      }
+
+      if (Capacitor.isNativePlatform() && data?.url) {
+        await Browser.open({ url: data.url, windowName: '_self' });
       }
 
       console.log('✅ OAuth initiated successfully');
     } catch (error) {
       console.error('💥 Sign-in error:', error);
-      setIsLoading(false);
       throw error;
+    } finally {
+      // On web we redirect away immediately; on native we keep UI responsive.
+      if (Capacitor.isNativePlatform()) setIsLoading(false);
     }
   };
 
