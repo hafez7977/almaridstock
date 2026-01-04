@@ -1,20 +1,46 @@
 import { GoogleUser } from '@/types/google-sheets';
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 // Mobile-compatible Google Auth using Supabase
 class GoogleAuthService {
   private isInitialized = false;
 
+  // Cross-platform storage helpers (Capacitor Preferences on native, localStorage on web)
+  private async setStorageItem(key: string, value: string) {
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.set({ key, value });
+    } else {
+      localStorage.setItem(key, value);
+    }
+  }
+
+  private async getStorageItem(key: string): Promise<string | null> {
+    if (Capacitor.isNativePlatform()) {
+      const { value } = await Preferences.get({ key });
+      return value ?? null;
+    }
+    return localStorage.getItem(key);
+  }
+
+  private async removeStorageItem(key: string) {
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.remove({ key });
+    } else {
+      localStorage.removeItem(key);
+    }
+  }
+
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     try {
-      console.log('Initializing Google Auth for mobile (Supabase)...');
-      
-      // Check if Supabase is properly configured
+      console.log('Initializing Google Auth (Supabase)...');
+
       const { data: { session } } = await supabase.auth.getSession();
       console.log('Current session check during init:', !!session);
-      
+
       this.isInitialized = true;
       console.log('Google Auth initialization completed successfully');
     } catch (error) {
@@ -22,23 +48,23 @@ class GoogleAuthService {
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        fullError: error
+        fullError: error,
       });
-      throw new Error(`Google Auth initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Google Auth initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   async signIn(): Promise<GoogleUser> {
-    console.log('Starting Google sign-in process for mobile (Supabase OAuth)...');
-    
+    console.log('Starting Google sign-in process (Supabase OAuth)...');
+
     try {
-      // For mobile apps, we need to use the custom URL scheme  
-      const isCapacitor = window.location.protocol === 'capacitor:';
-      const redirectTo = isCapacitor 
+      const redirectTo = Capacitor.isNativePlatform()
         ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
         : `${window.location.origin}/auth/callback`;
 
-      console.log('Detected environment:', isCapacitor ? 'mobile' : 'web');
+      console.log('Detected environment:', Capacitor.isNativePlatform() ? 'native' : 'web');
       console.log('Using redirect URL:', redirectTo);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -48,9 +74,9 @@ class GoogleAuthService {
           redirectTo,
           queryParams: {
             access_type: 'offline',
-            // Removed prompt: 'consent' to allow persistent sessions
-          }
-        }
+            prompt: 'consent',
+          },
+        },
       });
 
       if (error) {
@@ -58,24 +84,22 @@ class GoogleAuthService {
         console.error('OAuth error details:', {
           message: error.message,
           status: error.status,
-          details: error
+          details: error,
         });
         throw new Error(`Google auth error: ${error.message}`);
       }
 
       console.log('OAuth request initiated successfully, data:', data);
 
-      // In mobile environment, the OAuth flow will redirect and we need to handle the callback
-      // For now, we'll check if we already have a session from a completed OAuth flow
+      // In OAuth flow, a redirect usually happens. If we already have a session, return it.
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError) {
         console.error('Session error:', sessionError);
         throw new Error(`Session error: ${sessionError.message}`);
       }
 
       if (!session?.user) {
-        // This is expected in OAuth flow - the user will be redirected and come back
         console.log('No immediate session - OAuth redirect in progress');
         throw new Error('OAuth redirect in progress. Please complete sign-in in the opened window.');
       }
@@ -92,9 +116,9 @@ class GoogleAuthService {
 
       // Store the access token for Google API calls
       if (session.provider_token) {
-        localStorage.setItem('google_access_token', session.provider_token);
-        // Set a far future expiration since Supabase handles refresh
-        localStorage.setItem('google_token_expires_at', (Date.now() + 365 * 24 * 60 * 60 * 1000).toString());
+        await this.setStorageItem('google_access_token', session.provider_token);
+        // Keep a reasonable expiry marker; actual refresh is handled by Supabase.
+        await this.setStorageItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
         console.log('Stored Google access token successfully');
       } else {
         console.warn('No provider token in session - Google Sheets access may not work');
@@ -107,7 +131,7 @@ class GoogleAuthService {
       console.error('Sign-in error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        type: typeof error
+        type: typeof error,
       });
       throw error;
     }
@@ -115,78 +139,77 @@ class GoogleAuthService {
 
   async signOut(): Promise<void> {
     console.log('Signing out...');
-    localStorage.removeItem('google_access_token');
-    localStorage.removeItem('google_token_expires_at');
-    
+    await this.removeStorageItem('google_access_token');
+    await this.removeStorageItem('google_token_expires_at');
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Sign out error:', error);
     }
   }
 
-  getAccessToken(): string | null {
-    const token = localStorage.getItem('google_access_token');
+  async getAccessToken(): Promise<string | null> {
+    const token = await this.getStorageItem('google_access_token');
     console.log('getAccessToken - token exists:', !!token);
-    
+
     if (!token) {
-      console.log('No token found in localStorage');
+      console.log('No token found in storage');
       return null;
     }
 
-    // For Supabase OAuth, we don't need to check expiration as it's handled automatically
-    console.log('Token is valid (Supabase managed)');
+    console.log('Token is present (Supabase refresh handled separately)');
     return token;
   }
 
-  isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+  async isAuthenticated(): Promise<boolean> {
+    return !!(await this.getAccessToken());
   }
 
   async refreshToken(): Promise<string | null> {
     console.log('Refreshing token via Supabase...');
-    
+
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession();
-      
+
       if (error) {
         console.error('Token refresh error:', error);
         throw error;
       }
 
       if (session?.provider_token) {
-        localStorage.setItem('google_access_token', session.provider_token);
+        await this.setStorageItem('google_access_token', session.provider_token);
+        await this.setStorageItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
         return session.provider_token;
       }
 
       throw new Error('No provider token in refreshed session');
     } catch (error) {
       console.error('Failed to refresh token:', error);
-      this.signOut();
+      await this.signOut();
       throw error;
     }
   }
 
   async getValidAccessToken(): Promise<string | null> {
     console.log('getValidAccessToken called');
-    
-    // First try to get stored token - this persists across page refreshes
-    const storedToken = this.getAccessToken();
+
+    // First try stored token (persists across refreshes)
+    const storedToken = await this.getAccessToken();
     if (storedToken) {
-      console.log('Returning stored token from localStorage');
+      console.log('Returning stored token from storage');
       return storedToken;
     }
-    
-    // Check current session for provider_token (available right after OAuth)
+
+    // Then check current session for provider_token (often only present right after OAuth)
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (session?.provider_token) {
-      localStorage.setItem('google_access_token', session.provider_token);
-      localStorage.setItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
+      await this.setStorageItem('google_access_token', session.provider_token);
+      await this.setStorageItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
       console.log('Returning valid token from Supabase session');
       return session.provider_token;
     }
 
-    // If user is authenticated but no token available, they need to re-authenticate
     if (session?.user) {
       console.log('User authenticated but no Google token - re-authentication required');
     }
