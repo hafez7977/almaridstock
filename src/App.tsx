@@ -28,53 +28,60 @@ const App = () => {
       StatusBar.setOverlaysWebView({ overlay: true });
     }
 
+    let listener: { remove: () => Promise<void> } | null = null;
+
     CapApp.addListener('appUrlOpen', async ({ url }) => {
       console.log('🔗 App URL opened:', url);
 
-      // Handle OAuth callback URLs for Google auth
+      if (!url) return;
+
+      // Handle OAuth callback URLs for Google auth (native deep links)
       if (
-        url &&
-        (url.includes('auth/callback') ||
-          url.includes('#access_token') ||
-          url.includes('app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://'))
+        url.includes('auth/callback') ||
+        url.includes('#access_token') ||
+        url.startsWith('app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://')
       ) {
-        console.log('🔐 OAuth callback detected, processing...', url);
+        console.log('🔐 OAuth callback detected, routing to /auth/callback');
 
         // Close the in-app browser when returning from OAuth
         if (Capacitor.isNativePlatform()) {
           try {
             await Browser.close();
-          } catch (e) {
-            console.log('Browser already closed or not open');
+          } catch {
+            // ignore
           }
         }
 
         try {
-          // On native, Supabase won't automatically see the deep-link URL.
-          // Exchange the PKCE code manually so the session is persisted.
           const callbackUrl = new URL(url);
           const code = callbackUrl.searchParams.get('code');
 
+          // Route into our web callback handler so it can exchange the code and persist provider_token.
           if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              console.error('❌ exchangeCodeForSession failed:', error.message);
-            } else {
-              console.log('✅ Session established from native deep link');
-            }
+            window.location.href = `/auth/callback?code=${encodeURIComponent(code)}`;
+            return;
           }
+
+          // Fallback for implicit flows (hash-based)
+          if (callbackUrl.hash) {
+            window.location.href = `/auth/callback${callbackUrl.hash}`;
+            return;
+          }
+
+          // Last resort: just go home
+          window.location.href = '/';
         } catch (err) {
-          console.error('❌ Failed to process native OAuth callback:', err);
-        } finally {
-          // Ensure the webview returns to the app
+          console.error('❌ Failed to route native OAuth callback:', err);
           window.location.href = '/';
         }
       }
+    }).then((h) => {
+      listener = h;
     });
 
     return () => {
-      // Cleanup listeners when component unmounts
-      CapApp.removeAllListeners();
+      // Cleanup listener when component unmounts
+      listener?.remove();
     };
   }, []);
 

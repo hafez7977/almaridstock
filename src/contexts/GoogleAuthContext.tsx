@@ -77,67 +77,73 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
   useEffect(() => {
     console.log('🔄 Setting up auth state listener...');
 
+    const authInitialized = { current: false };
+
     // Listen for auth changes FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔔 Auth state change:', { 
-          event, 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔔 Auth state change:', {
+        event,
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        providerToken: !!session?.provider_token,
+      });
+
+      authInitialized.current = true;
+
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+
+      // Handle storage async operations using setTimeout to avoid blocking
+      if (session?.provider_token) {
+        setTimeout(async () => {
+          await setStorageItem('google_access_token', session.provider_token!);
+          console.log('✅ Updated Google provider token');
+        }, 0);
+      }
+      // Don't clear the token on every auth change - only clear on explicit sign out
+      // This preserves tokens across page refreshes where provider_token isn't returned
+    });
+
+    // THEN get initial session (but don't overwrite state if the listener already fired)
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session }, error }) => {
+        console.log('📍 Initial session check:', {
           hasSession: !!session,
           hasUser: !!session?.user,
           userEmail: session?.user?.email,
-          providerToken: !!session?.provider_token 
+          error: error?.message,
+          providerToken: !!session?.provider_token,
         });
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-        
-        // Handle storage async operations using setTimeout to avoid blocking
-        if (session?.provider_token) {
-          setTimeout(async () => {
-            await setStorageItem('google_access_token', session.provider_token!);
-            console.log('✅ Updated Google provider token');
-          }, 0);
-        }
-        // Don't clear the token on every auth change - only clear on explicit sign out
-        // This preserves tokens across page refreshes where provider_token isn't returned
-      }
-    );
 
-    // THEN get initial session
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      console.log('📍 Initial session check:', { 
-        hasSession: !!session, 
-        hasUser: !!session?.user,
-        userEmail: session?.user?.email,
-        error: error?.message,
-        providerToken: !!session?.provider_token
-      });
-      
-      // Store token if available from initial session
-      if (session?.provider_token) {
-        await setStorageItem('google_access_token', session.provider_token);
-        console.log('✅ Stored Google provider token from initial session');
-      } else if (session?.user) {
-        // If user is logged in but no provider_token, check if we have a stored one
-        const storedToken = await getStorageItem('google_access_token');
-        if (!storedToken) {
-          console.log('⚠️ User authenticated but no stored token - may need re-auth for Google API');
-        } else {
-          console.log('✅ Using stored Google access token');
+        // Store token if available from initial session
+        if (session?.provider_token) {
+          await setStorageItem('google_access_token', session.provider_token);
+          console.log('✅ Stored Google provider token from initial session');
+        } else if (session?.user) {
+          // If user is logged in but no provider_token, check if we have a stored one
+          const storedToken = await getStorageItem('google_access_token');
+          if (!storedToken) {
+            console.log('⚠️ User authenticated but no stored token - may need re-auth for Google API');
+          } else {
+            console.log('✅ Using stored Google access token');
+          }
         }
-      }
-      
-      // Set initial state only if auth listener hasn't fired yet
-      if (isLoading) {
-        setSession(session);
-        setUser(session?.user ?? null);
+
+        if (!authInitialized.current) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ Failed to get initial session:', err);
         setIsLoading(false);
-      }
-    }).catch(err => {
-      console.error('❌ Failed to get initial session:', err);
-      setIsLoading(false);
-    });
+      });
 
     return () => {
       console.log('🔌 Cleaning up auth listener');
