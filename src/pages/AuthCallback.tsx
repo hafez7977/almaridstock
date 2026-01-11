@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 
 const AuthCallback = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -25,7 +22,11 @@ const AuthCallback = () => {
         const code = url.searchParams.get('code');
         const hasAccessTokenHash = window.location.hash.includes('access_token');
 
-        console.log('🔐 Auth callback detected', { hasCode: !!code, hasAccessTokenHash });
+        console.log('🔐 Auth callback detected', { 
+          hasCode: !!code, 
+          hasAccessTokenHash,
+          fullUrl: window.location.href 
+        });
 
         if (code) {
           console.log('📤 Exchanging code for session...');
@@ -57,17 +58,12 @@ const AuthCallback = () => {
 
           setStatus('success');
 
-          // Wait a moment for onAuthStateChange to propagate
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Give onAuthStateChange time to propagate globally
+          await new Promise((resolve) => setTimeout(resolve, 800));
 
-          // Verify session is set before navigating
-          const { data: currentSession } = await supabase.auth.getSession();
-          console.log('📍 Verified session before redirect:', {
-            hasSession: !!currentSession.session,
-            userEmail: currentSession.session?.user?.email,
-          });
-
-          navigate('/', { replace: true });
+          // Use window.location for a full page reload to ensure context reinitializes
+          console.log('📍 Redirecting to home with full reload...');
+          window.location.replace('/');
           return;
         }
 
@@ -75,20 +71,27 @@ const AuthCallback = () => {
         if (hasAccessTokenHash) {
           console.log('🔐 Hash-based token detected, waiting for auth state change...');
           // Give onAuthStateChange time to process the hash
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
           
           const { data: currentSession } = await supabase.auth.getSession();
           if (currentSession.session) {
             console.log('✅ Session established from hash');
             setStatus('success');
-            navigate('/', { replace: true });
+            
+            // Store provider token if available
+            if (currentSession.session.provider_token) {
+              await setStorageItem('google_access_token', currentSession.session.provider_token);
+              await setStorageItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
+            }
+            
+            window.location.replace('/');
             return;
           }
         }
 
         // No code or hash - just redirect home
         console.log('⚠️ No auth code or hash found, redirecting home');
-        navigate('/', { replace: true });
+        window.location.replace('/');
       } catch (e) {
         console.error('💥 Auth callback processing error:', e);
         setStatus('error');
@@ -97,7 +100,7 @@ const AuthCallback = () => {
     };
 
     run();
-  }, [navigate, location.key]);
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background">
@@ -117,7 +120,7 @@ const AuthCallback = () => {
             <p className="text-lg text-destructive">❌ Authentication failed</p>
             <p className="text-sm text-muted-foreground">{errorMessage}</p>
             <button
-              onClick={() => navigate('/', { replace: true })}
+              onClick={() => window.location.replace('/')}
               className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Go back
