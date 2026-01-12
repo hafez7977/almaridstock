@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
@@ -6,8 +6,13 @@ import { Preferences } from '@capacitor/preferences';
 const AuthCallback = () => {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const hasRunRef = useRef(false);
 
   useEffect(() => {
+    // React 18 StrictMode runs effects twice in dev; guard to prevent double PKCE exchange.
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
     const setStorageItem = async (key: string, value: string) => {
       if (Capacitor.isNativePlatform()) {
         await Preferences.set({ key, value });
