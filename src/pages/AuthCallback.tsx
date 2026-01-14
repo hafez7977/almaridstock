@@ -153,7 +153,7 @@ const AuthCallback = () => {
           </>
         )}
         {status === 'success' && (
-          <p className="text-lg text-green-600">✅ Signed in successfully! Redirecting...</p>
+          <p className="text-lg text-foreground">Signed in successfully. Redirecting…</p>
         )}
         {status === 'error' && (
           <div className="space-y-2">
