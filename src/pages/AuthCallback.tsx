@@ -27,18 +27,46 @@ const AuthCallback = () => {
         const code = url.searchParams.get('code');
         const hasAccessTokenHash = window.location.hash.includes('access_token');
 
-        console.log('🔐 Auth callback detected', { 
-          hasCode: !!code, 
+        console.log('🔐 Auth callback detected', {
+          hasCode: !!code,
           hasAccessTokenHash,
-          fullUrl: window.location.href 
+          fullUrl: window.location.href,
         });
 
+        // Prevent loops if the page reloads while still carrying the same OAuth code.
         if (code) {
+          const lastCode = sessionStorage.getItem('supabase_oauth_last_code');
+          if (lastCode && lastCode === code) {
+            console.log('🛑 OAuth code already processed in this tab, redirecting home');
+            window.location.replace('/');
+            return;
+          }
+          sessionStorage.setItem('supabase_oauth_last_code', code);
+
+          // Strip the code from the URL early so reload/back doesn't re-trigger the exchange.
+          try {
+            url.searchParams.delete('code');
+            window.history.replaceState({}, document.title, url.pathname + url.search);
+          } catch {
+            // ignore
+          }
+
           console.log('📤 Exchanging code for session...');
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          
+
           if (error) {
             console.error('❌ Auth code exchange failed:', error.message);
+
+            // If the exchange fails because the code was already used, we may still have a valid session.
+            const { data: sessionAfterError } = await supabase.auth.getSession();
+            if (sessionAfterError.session) {
+              console.log('✅ Session already exists despite exchange error; redirecting home');
+              setStatus('success');
+              await new Promise((resolve) => setTimeout(resolve, 400));
+              window.location.replace('/');
+              return;
+            }
+
             setStatus('error');
             setErrorMessage(error.message);
             return;
@@ -77,18 +105,25 @@ const AuthCallback = () => {
           console.log('🔐 Hash-based token detected, waiting for auth state change...');
           // Give onAuthStateChange time to process the hash
           await new Promise((resolve) => setTimeout(resolve, 1500));
-          
+
           const { data: currentSession } = await supabase.auth.getSession();
           if (currentSession.session) {
             console.log('✅ Session established from hash');
             setStatus('success');
-            
+
             // Store provider token if available
             if (currentSession.session.provider_token) {
               await setStorageItem('google_access_token', currentSession.session.provider_token);
               await setStorageItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
             }
-            
+
+            // Strip hash then redirect
+            try {
+              window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            } catch {
+              // ignore
+            }
+
             window.location.replace('/');
             return;
           }
