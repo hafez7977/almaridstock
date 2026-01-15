@@ -156,11 +156,12 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
 
     try {
-      // Use custom URL scheme for native app OAuth
       const redirectTo = Capacitor.isNativePlatform()
         ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
         : `${window.location.origin}/auth/callback`;
 
+      // Use explicit redirects everywhere.
+      // This is more reliable in embedded/preview contexts and gives us a URL to open on native.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -171,13 +172,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
             access_type: 'offline',
             prompt: 'consent',
           },
-          // Critical for native: keep PKCE verifier in the WebView storage,
-          // then open the OAuth URL in the system/in-app browser.
-          ...(Capacitor.isNativePlatform()
-            ? {
-                skipBrowserRedirect: true,
-              }
-            : {}),
+          skipBrowserRedirect: true,
         },
       });
 
@@ -186,8 +181,14 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         throw error;
       }
 
-      if (Capacitor.isNativePlatform() && data?.url) {
+      if (!data?.url) {
+        throw new Error('No OAuth URL returned from Supabase');
+      }
+
+      if (Capacitor.isNativePlatform()) {
         await Browser.open({ url: data.url, windowName: '_self' });
+      } else {
+        window.location.assign(data.url);
       }
 
       console.log('✅ OAuth initiated successfully');
@@ -195,8 +196,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       console.error('💥 Sign-in error:', error);
       throw error;
     } finally {
-      // On web we redirect away immediately; on native we keep UI responsive.
-      if (Capacitor.isNativePlatform()) setIsLoading(false);
+      // If we didn't navigate away (e.g., due to an error), ensure UI isn't stuck.
+      setIsLoading(false);
     }
   };
 
