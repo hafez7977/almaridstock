@@ -160,8 +160,6 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
         : `${window.location.origin}/auth/callback`;
 
-      // Use explicit redirects everywhere.
-      // This is more reliable in embedded/preview contexts and gives us a URL to open on native.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -172,7 +170,9 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
             access_type: 'offline',
             prompt: 'consent',
           },
-          skipBrowserRedirect: true,
+          // On native we must manually open the OAuth URL in the system/in-app browser.
+          // On web, let Supabase handle the redirect to avoid storage/cookie edge cases in iframes.
+          ...(Capacitor.isNativePlatform() ? { skipBrowserRedirect: true } : {}),
         },
       });
 
@@ -181,14 +181,9 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         throw error;
       }
 
-      if (!data?.url) {
-        throw new Error('No OAuth URL returned from Supabase');
-      }
-
       if (Capacitor.isNativePlatform()) {
+        if (!data?.url) throw new Error('No OAuth URL returned from Supabase');
         await Browser.open({ url: data.url, windowName: '_self' });
-      } else {
-        window.location.assign(data.url);
       }
 
       console.log('✅ OAuth initiated successfully');
@@ -196,7 +191,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       console.error('💥 Sign-in error:', error);
       throw error;
     } finally {
-      // If we didn't navigate away (e.g., due to an error), ensure UI isn't stuck.
+      // On web we navigate away; on native we might stay in-app if something fails.
       setIsLoading(false);
     }
   };
