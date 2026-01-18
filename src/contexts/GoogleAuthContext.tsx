@@ -156,9 +156,11 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
 
     try {
+      // Use a stable, whitelisted redirect URL to avoid Supabase "requested path is invalid"
+      // when running inside preview/iframe origins.
       const redirectTo = Capacitor.isNativePlatform()
         ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
-        : `${window.location.origin}/auth/callback`;
+        : 'https://almaridstock.lovable.app/auth/callback';
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
