@@ -156,12 +156,29 @@ const AuthCallback = () => {
           <p className="text-lg text-foreground">Signed in successfully. Redirecting…</p>
         )}
         {status === 'error' && (
-          <div className="space-y-2">
+          <div className="space-y-3 max-w-md">
             <p className="text-lg text-destructive">❌ Authentication failed</p>
-            <p className="text-sm text-muted-foreground">{errorMessage}</p>
+            <p className="text-sm text-muted-foreground break-words">{errorMessage}</p>
+
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Common fix:</p>
+              <p>
+                In Supabase → Authentication → URL Configuration, add your app URL and
+                <span className="font-mono"> /auth/callback</span> to Redirect URLs.
+              </p>
+              <a
+                className="underline underline-offset-4"
+                href="https://supabase.com/dashboard/project/hjclvjxpufulxinxmnul/auth/url-configuration"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open Supabase URL settings
+              </a>
+            </div>
+
             <button
               onClick={() => window.location.replace('/')}
-              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Go back
             </button>
