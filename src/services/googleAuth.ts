@@ -62,7 +62,7 @@ class GoogleAuthService {
     try {
       const redirectTo = Capacitor.isNativePlatform()
         ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
-        : 'https://almaridstock.lovable.app/auth/callback';
+        : `${window.location.origin}/auth/callback`;
 
       console.log('Detected environment:', Capacitor.isNativePlatform() ? 'native' : 'web');
       console.log('Using redirect URL:', redirectTo);
