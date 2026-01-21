@@ -177,6 +177,15 @@ class GoogleAuthService {
     console.log('Refreshing token via Supabase...');
 
     try {
+      // If we don't have a refresh_token in the current session, refreshSession() will
+      // throw ("refresh_token_not_found"). Avoid the noisy loop and let callers
+      // trigger re-auth instead.
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      if (!existingSession?.refresh_token) {
+        console.warn('No refresh_token available; cannot refresh session.');
+        return null;
+      }
+
       const { data: { session }, error } = await supabase.auth.refreshSession();
 
       if (error) {
@@ -193,6 +202,17 @@ class GoogleAuthService {
       throw new Error('No provider token in refreshed session');
     } catch (error) {
       console.error('Failed to refresh token:', error);
+      // If storage got partially wiped, Supabase may report refresh_token_not_found.
+      // Cleanly sign out locally and let the UI prompt for sign-in again.
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Refresh Token Not Found') || message.includes('refresh_token_not_found')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await supabase.auth.signOut({ scope: 'local' } as any);
+        await this.removeStorageItem('google_access_token');
+        await this.removeStorageItem('google_token_expires_at');
+        return null;
+      }
+
       await this.signOut();
       throw error;
     }

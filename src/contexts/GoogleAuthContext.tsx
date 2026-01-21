@@ -5,6 +5,8 @@ import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { Preferences } from '@capacitor/preferences';
 
+const SUPABASE_REF = 'hjclvjxpufulxinxmnul';
+
 interface GoogleAuthContextType {
   user: User | null;
   session: Session | null;
@@ -60,6 +62,31 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
       await Preferences.remove({ key });
     } else {
       localStorage.removeItem(key);
+    }
+  };
+
+  const clearBrokenSupabaseSession = async () => {
+    // When local auth storage gets partially cleared (common in preview/iframe flows),
+    // Supabase may spam: "Invalid Refresh Token: Refresh Token Not Found".
+    // Clearing local session removes the loop and lets the user sign in cleanly.
+    try {
+      // Prefer local-only sign out so we don't depend on network.
+      // (supabase-js supports `scope: 'local'`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await supabase.auth.signOut({ scope: 'local' } as any);
+    } catch {
+      // ignore
+    }
+
+    if (!Capacitor.isNativePlatform()) {
+      try {
+        const prefix = `sb-${SUPABASE_REF}-`;
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith(prefix)) localStorage.removeItem(key);
+        }
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -119,6 +146,11 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
           error: error?.message,
           providerToken: !!session?.provider_token,
         });
+
+        if (error?.message?.includes('Refresh Token Not Found')) {
+          console.warn('🧹 Detected broken refresh token in storage; clearing local auth session');
+          await clearBrokenSupabaseSession();
+        }
 
         // Store token if available from initial session
         if (session?.provider_token) {
