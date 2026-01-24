@@ -2,6 +2,7 @@ import { GoogleUser } from '@/types/google-sheets';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
+import { getOAuthRedirectTo } from '@/utils/authRedirect';
 
 // Mobile-compatible Google Auth using Supabase
 class GoogleAuthService {
@@ -60,9 +61,7 @@ class GoogleAuthService {
     console.log('Starting Google sign-in process (Supabase OAuth)...');
 
     try {
-      const redirectTo = Capacitor.isNativePlatform()
-        ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
-        : `${window.location.origin}/auth/callback`;
+      const redirectTo = getOAuthRedirectTo();
 
       console.log('Detected environment:', Capacitor.isNativePlatform() ? 'native' : 'web');
       console.log('Using redirect URL:', redirectTo);

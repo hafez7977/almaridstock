@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { Preferences } from '@capacitor/preferences';
+import { getOAuthRedirectTo } from '@/utils/authRedirect';
 
 const SUPABASE_REF = 'hjclvjxpufulxinxmnul';
 
@@ -188,12 +189,7 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
     setIsLoading(true);
 
     try {
-      // Prefer the current origin so sign-in works in both Preview and Published.
-      // If you still see "requested path is invalid", add this origin + /auth/callback
-      // in Supabase → Authentication → URL Configuration.
-      const redirectTo = Capacitor.isNativePlatform()
-        ? 'app.lovable.c3feb9cc1fe04d038d7113be0d8bcf85://auth/callback'
-        : `${window.location.origin}/auth/callback`;
+      const redirectTo = getOAuthRedirectTo();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
