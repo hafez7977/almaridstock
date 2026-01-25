@@ -25,12 +25,44 @@ const AuthCallback = () => {
       try {
         const url = new URL(window.location.href);
         const code = url.searchParams.get('code');
+        const returnTo = url.searchParams.get('returnTo');
         const hasAccessTokenHash = window.location.hash.includes('access_token');
+
+        const getSafeReturnTo = (raw: string | null) => {
+          if (!raw) return null;
+          try {
+            const parsed = new URL(raw);
+            if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+
+            // Prevent open redirects: only allow known app hosts.
+            const host = parsed.hostname;
+            const allowed =
+              host.endsWith('.lovable.app') ||
+              host.endsWith('.lovableproject.com') ||
+              host === 'almaridstock.com' ||
+              host === 'www.almaridstock.com';
+
+            return allowed ? parsed.origin : null;
+          } catch {
+            return null;
+          }
+        };
+
+        const safeReturnOrigin = getSafeReturnTo(returnTo);
+        const redirectHome = (originOverride?: string | null) => {
+          const origin = originOverride ?? safeReturnOrigin;
+          if (origin) {
+            window.location.replace(`${origin}/`);
+            return;
+          }
+          window.location.replace('/');
+        };
 
         console.log('🔐 Auth callback detected', {
           hasCode: !!code,
           hasAccessTokenHash,
           fullUrl: window.location.href,
+          hasReturnTo: !!safeReturnOrigin,
         });
 
         // Prevent loops if the page reloads while still carrying the same OAuth code.
@@ -38,7 +70,7 @@ const AuthCallback = () => {
           const lastCode = sessionStorage.getItem('supabase_oauth_last_code');
           if (lastCode && lastCode === code) {
             console.log('🛑 OAuth code already processed in this tab, redirecting home');
-            window.location.replace('/');
+            redirectHome();
             return;
           }
           sessionStorage.setItem('supabase_oauth_last_code', code);
@@ -63,7 +95,7 @@ const AuthCallback = () => {
               console.log('✅ Session already exists despite exchange error; redirecting home');
               setStatus('success');
               await new Promise((resolve) => setTimeout(resolve, 400));
-              window.location.replace('/');
+              redirectHome();
               return;
             }
 
@@ -96,7 +128,7 @@ const AuthCallback = () => {
 
           // Use window.location for a full page reload to ensure context reinitializes
           console.log('📍 Redirecting to home with full reload...');
-          window.location.replace('/');
+          redirectHome();
           return;
         }
 
@@ -124,14 +156,14 @@ const AuthCallback = () => {
               // ignore
             }
 
-            window.location.replace('/');
+            redirectHome();
             return;
           }
         }
 
         // No code or hash - just redirect home
         console.log('⚠️ No auth code or hash found, redirecting home');
-        window.location.replace('/');
+        redirectHome();
       } catch (e) {
         console.error('💥 Auth callback processing error:', e);
         setStatus('error');
