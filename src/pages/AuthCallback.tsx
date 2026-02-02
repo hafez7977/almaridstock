@@ -49,6 +49,7 @@ const AuthCallback = () => {
         };
 
         const safeReturnOrigin = getSafeReturnTo(returnTo);
+        const currentOrigin = window.location.origin;
         const redirectHome = (originOverride?: string | null) => {
           const origin = originOverride ?? safeReturnOrigin;
           if (origin) {
@@ -56,6 +57,26 @@ const AuthCallback = () => {
             return;
           }
           window.location.replace('/');
+        };
+
+        const redirectToOriginWithSession = (targetOrigin: string, session: {
+          access_token: string;
+          refresh_token: string;
+          expires_in?: number;
+          token_type?: string;
+          provider_token?: string | null;
+        }) => {
+          // We must set the session on the SAME origin that will use it.
+          // Since preview + published are different origins, we forward the session via hash
+          // to /auth/callback on the target origin, then immediately persist it there.
+          const params = new URLSearchParams();
+          params.set('access_token', session.access_token);
+          params.set('refresh_token', session.refresh_token);
+          if (session.expires_in != null) params.set('expires_in', String(session.expires_in));
+          if (session.token_type) params.set('token_type', session.token_type);
+          if (session.provider_token) params.set('provider_token', session.provider_token);
+
+          window.location.replace(`${targetOrigin}/auth/callback#${params.toString()}`);
         };
 
         console.log('🔐 Auth callback detected', {
@@ -111,6 +132,25 @@ const AuthCallback = () => {
             hasProviderToken: !!data.session?.provider_token,
           });
 
+          // If the exchange happened on a different origin than where the user started
+          // (e.g. Published domain -> Preview), forward the session to the target origin
+          // so it can be persisted there.
+          if (safeReturnOrigin && safeReturnOrigin !== currentOrigin && data.session) {
+            console.log('🔁 Forwarding session to return origin for persistence', {
+              from: currentOrigin,
+              to: safeReturnOrigin,
+            });
+
+            redirectToOriginWithSession(safeReturnOrigin, {
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+              expires_in: data.session.expires_in,
+              token_type: data.session.token_type,
+              provider_token: data.session.provider_token,
+            });
+            return;
+          }
+
           // Persist Google provider token immediately after successful exchange.
           const providerToken = data?.session?.provider_token;
           if (providerToken) {
@@ -134,13 +174,59 @@ const AuthCallback = () => {
 
         // Handle implicit flow (hash-based tokens)
         if (hasAccessTokenHash) {
-          console.log('🔐 Hash-based token detected, waiting for auth state change...');
-          // Give onAuthStateChange time to process the hash
+          console.log('🔐 Hash-based token detected, attempting to persist session...');
+
+          const hash = window.location.hash.startsWith('#')
+            ? window.location.hash.slice(1)
+            : window.location.hash;
+          const hashParams = new URLSearchParams(hash);
+          const access_token = hashParams.get('access_token');
+          const refresh_token = hashParams.get('refresh_token');
+          const provider_token = hashParams.get('provider_token');
+
+          if (access_token && refresh_token) {
+            const { data: setData, error: setErr } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+
+            if (setErr) {
+              console.error('❌ Failed to set session from hash:', setErr.message);
+              setStatus('error');
+              setErrorMessage(setErr.message);
+              return;
+            }
+
+            console.log('✅ Session persisted from hash', {
+              hasSession: !!setData.session,
+              userEmail: setData.session?.user?.email,
+            });
+
+            if (provider_token) {
+              await setStorageItem('google_access_token', provider_token);
+              await setStorageItem('google_token_expires_at', (Date.now() + 3600 * 1000).toString());
+            }
+
+            setStatus('success');
+
+            // Strip hash then redirect
+            try {
+              window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            } catch {
+              // ignore
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            redirectHome();
+            return;
+          }
+
+          // Fallback: let Supabase try to parse the hash itself
           await new Promise((resolve) => setTimeout(resolve, 1500));
 
           const { data: currentSession } = await supabase.auth.getSession();
           if (currentSession.session) {
-            console.log('✅ Session established from hash');
+            console.log('✅ Session established from hash (fallback)');
             setStatus('success');
 
             // Store provider token if available
