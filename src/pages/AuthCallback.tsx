@@ -42,7 +42,10 @@ const AuthCallback = () => {
               host === 'almaridstock.com' ||
               host === 'www.almaridstock.com';
 
-            return allowed ? parsed.origin : null;
+            // Defensive: some environments can surface an origin ending with ':'
+            // which would later produce URLs like https://host:/ (404 + redirect loops).
+            const cleanedOrigin = parsed.origin.replace(/:$/, '');
+            return allowed ? cleanedOrigin : null;
           } catch {
             return null;
           }
