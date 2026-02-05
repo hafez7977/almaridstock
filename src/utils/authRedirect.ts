@@ -8,7 +8,10 @@ function withReturnTo(baseCallbackUrl: string): string {
   // Query params are allowed in Supabase redirect URLs as long as the path matches.
   try {
     const u = new URL(baseCallbackUrl);
-    u.searchParams.set("returnTo", window.location.origin);
+    // Some embedded/preview environments can produce a malformed origin with a trailing ':'
+    // (e.g. https://example.com:) which later becomes https://example.com:/ and 404s.
+    const safeOrigin = window.location.origin.replace(/:$/, "");
+    u.searchParams.set("returnTo", safeOrigin);
     return u.toString();
   } catch {
     // Fallback: if URL parsing fails for any reason, return unchanged.
