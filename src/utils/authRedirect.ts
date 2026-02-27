@@ -2,16 +2,25 @@ import { Capacitor } from "@capacitor/core";
 
 const PUBLISHED_ORIGIN = "https://almaridstock.lovable.app";
 
+function isLikelyEmbeddedWebView(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isAndroidWebView = /\bwv\b|Version\/\d+\.\d+.*Chrome\//i.test(ua);
+  const isAppMySite = /appmysite/i.test(ua);
+  return isAndroidWebView || isAppMySite;
+}
+
 function withReturnTo(baseCallbackUrl: string): string {
   // Pass the origin we started OAuth from so the callback can send the user back
   // to the same environment (Preview vs Published) after exchanging the code.
-  // Query params are allowed in Supabase redirect URLs as long as the path matches.
+  // On embedded WebViews (e.g. AppMySite), never bounce to preview domains,
+  // because they can require Lovable auth and create a login loop.
   try {
     const u = new URL(baseCallbackUrl);
-    // Some embedded/preview environments can produce a malformed origin with a trailing ':'
-    // (e.g. https://example.com:) which later becomes https://example.com:/ and 404s.
-    const safeOrigin = window.location.origin.replace(/:$/, "");
-    u.searchParams.set("returnTo", safeOrigin);
+    const safeOrigin = isLikelyEmbeddedWebView()
+      ? PUBLISHED_ORIGIN
+      : window.location.origin.replace(/:$/, '');
+    u.searchParams.set('returnTo', safeOrigin);
     return u.toString();
   } catch {
     // Fallback: if URL parsing fails for any reason, return unchanged.
