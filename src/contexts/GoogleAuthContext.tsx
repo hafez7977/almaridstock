@@ -8,6 +8,14 @@ import { getOAuthRedirectTo } from '@/utils/authRedirect';
 
 const SUPABASE_REF = 'hjclvjxpufulxinxmnul';
 
+const isLikelyEmbeddedWebView = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isAndroidWebView = /\bwv\b|Version\/\d+\.\d+.*Chrome\//i.test(ua);
+  const isAppMySite = /appmysite/i.test(ua);
+  return isAndroidWebView || isAppMySite;
+};
+
 interface GoogleAuthContextType {
   user: User | null;
   session: Session | null;
@@ -190,6 +198,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
 
     try {
       const redirectTo = getOAuthRedirectTo();
+      const shouldManualBrowserRedirect =
+        Capacitor.isNativePlatform() || isLikelyEmbeddedWebView();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -201,9 +211,8 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
             access_type: 'offline',
             prompt: 'consent',
           },
-          // On native we must manually open the OAuth URL in the system/in-app browser.
-          // On web, let Supabase handle the redirect to avoid storage/cookie edge cases in iframes.
-          ...(Capacitor.isNativePlatform() ? { skipBrowserRedirect: true } : {}),
+          // Native and embedded mobile webviews must manually open OAuth in a secure browser context.
+          ...(shouldManualBrowserRedirect ? { skipBrowserRedirect: true } : {}),
         },
       });
 
@@ -212,9 +221,17 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         throw error;
       }
 
-      if (Capacitor.isNativePlatform()) {
+      if (shouldManualBrowserRedirect) {
         if (!data?.url) throw new Error('No OAuth URL returned from Supabase');
-        await Browser.open({ url: data.url, windowName: '_self' });
+
+        if (Capacitor.isNativePlatform()) {
+          await Browser.open({ url: data.url, windowName: '_self' });
+        } else {
+          const popup = window.open(data.url, '_blank', 'noopener,noreferrer');
+          if (!popup) {
+            window.location.assign(data.url);
+          }
+        }
       }
 
       console.log('✅ OAuth initiated successfully');
