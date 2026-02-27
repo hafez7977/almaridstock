@@ -16,9 +16,36 @@ import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
+const PUBLISHED_ORIGIN = "https://almaridstock.lovable.app";
+
+const isLikelyEmbeddedWebView = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isAndroidWebView = /\bwv\b|Version\/\d+\.\d+.*Chrome\//i.test(ua);
+  const isAppMySite = /appmysite/i.test(ua);
+  return isAndroidWebView || isAppMySite;
+};
 
 const App = () => {
   useEffect(() => {
+    // If AppMySite/WebView is loading a Lovable preview URL, force it to published domain
+    // to avoid Lovable auth walls and callback loops.
+    if (!Capacitor.isNativePlatform() && isLikelyEmbeddedWebView()) {
+      const host = window.location.hostname;
+      const isLovablePreviewHost =
+        host.endsWith('lovableproject.com') || host.startsWith('id-preview--');
+
+      if (isLovablePreviewHost) {
+        const targetUrl = `${PUBLISHED_ORIGIN}${window.location.pathname}${window.location.search}${window.location.hash}`;
+        console.log('🔀 Embedded WebView on preview host; redirecting to published domain', {
+          from: window.location.href,
+          to: targetUrl,
+        });
+        window.location.replace(targetUrl);
+        return;
+      }
+    }
+
     // iOS native optimizations
     if (Capacitor.isNativePlatform()) {
       // Set status bar to light content for better visibility
