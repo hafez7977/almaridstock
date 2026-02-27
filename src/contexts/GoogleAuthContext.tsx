@@ -16,6 +16,11 @@ const isLikelyEmbeddedWebView = () => {
   return isAndroidWebView || isAppMySite;
 };
 
+const isAndroidDevice = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /android/i.test(navigator.userAgent || '');
+};
+
 interface GoogleAuthContextType {
   user: User | null;
   session: Session | null;
@@ -227,9 +232,22 @@ export const GoogleAuthProvider: React.FC<GoogleAuthProviderProps> = ({ children
         if (Capacitor.isNativePlatform()) {
           await Browser.open({ url: data.url, windowName: '_self' });
         } else {
-          const popup = window.open(data.url, '_blank', 'noopener,noreferrer');
-          if (!popup) {
-            window.location.assign(data.url);
+          // AppMySite/embedded Android WebViews are blocked by Google OAuth.
+          // Force handoff to external Chrome using Android intent when possible.
+          if (isLikelyEmbeddedWebView() && isAndroidDevice()) {
+            const intentUrl = `intent://${data.url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+            window.location.assign(intentUrl);
+
+            // Fallback in case intent is ignored.
+            setTimeout(() => {
+              const popup = window.open(data.url, '_blank', 'noopener,noreferrer');
+              if (!popup) window.location.assign(data.url);
+            }, 500);
+          } else {
+            const popup = window.open(data.url, '_blank', 'noopener,noreferrer');
+            if (!popup) {
+              window.location.assign(data.url);
+            }
           }
         }
       }
