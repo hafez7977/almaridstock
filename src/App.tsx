@@ -28,6 +28,10 @@ const isLikelyEmbeddedWebView = () => {
 
 const App = () => {
   useEffect(() => {
+    // TEMPORARY DEBUG: Log the actual hostname to help diagnose AppMySite URL issues
+    console.log('🌐 APP LOADED ON:', window.location.hostname, '| Full URL:', window.location.href);
+    console.log('🌐 Is WebView:', isLikelyEmbeddedWebView(), '| UA:', navigator.userAgent);
+
     // If AppMySite/WebView is loading a Lovable preview URL, force it to published domain
     // to avoid Lovable auth walls and callback loops.
     if (!Capacitor.isNativePlatform() && isLikelyEmbeddedWebView()) {
