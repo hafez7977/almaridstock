@@ -28,22 +28,35 @@ const AuthCallback = () => {
         const returnTo = url.searchParams.get('returnTo');
         const hasAccessTokenHash = window.location.hash.includes('access_token');
 
+        const isEmbeddedWebView = (() => {
+          if (typeof navigator === 'undefined') return false;
+          const ua = navigator.userAgent || '';
+          return /\bwv\b|Version\/\d+\.\d+.*Chrome\//i.test(ua) || /appmysite/i.test(ua);
+        })();
+
         const getSafeReturnTo = (raw: string | null) => {
           if (!raw) return null;
           try {
             const parsed = new URL(raw);
             if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
 
-            // Prevent open redirects: only allow known app hosts.
             const host = parsed.hostname;
+            const isPreviewDomain =
+              host.endsWith('.lovableproject.com') || host.startsWith('id-preview--');
+
+            // In embedded WebViews (AppMySite), NEVER redirect to preview domains
+            // because they require Lovable platform auth and create a login loop.
+            if (isEmbeddedWebView && isPreviewDomain) {
+              console.log('🛑 Blocking returnTo preview domain in WebView:', raw);
+              return null;
+            }
+
             const allowed =
               host.endsWith('.lovable.app') ||
               host.endsWith('.lovableproject.com') ||
               host === 'almaridstock.com' ||
               host === 'www.almaridstock.com';
 
-            // Defensive: some environments can surface an origin ending with ':'
-            // which would later produce URLs like https://host:/ (404 + redirect loops).
             const cleanedOrigin = parsed.origin.replace(/:$/, '');
             return allowed ? cleanedOrigin : null;
           } catch {
