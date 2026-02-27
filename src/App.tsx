@@ -26,8 +26,30 @@ const isLikelyEmbeddedWebView = () => {
   return isAndroidWebView || isAppMySite;
 };
 
+const normalizeMalformedEntryPath = () => {
+  if (typeof window === 'undefined') return false;
+
+  const { pathname, search, hash, origin, href } = window.location;
+  const lowerPath = pathname.toLowerCase();
+
+  // Some wrappers open SPA apps on /index.html or even /https://domain.tld,
+  // which BrowserRouter treats as unknown routes and triggers NotFound.
+  const isCommonWrapperPath = lowerPath === '/index.html' || lowerPath === '/home' || lowerPath === '/home.html';
+  const isWrappedAbsoluteUrlPath = /^\/https?:\/\//i.test(pathname) || /^\/www\./i.test(pathname);
+
+  if (!isCommonWrapperPath && !isWrappedAbsoluteUrlPath) return false;
+
+  const targetUrl = `${origin}/${search}${hash}`;
+  console.log('🧹 Normalizing malformed entry path', { from: href, to: targetUrl });
+  window.location.replace(targetUrl);
+  return true;
+};
+
 const App = () => {
   useEffect(() => {
+    // Normalize malformed wrapper entry paths before any auth/routing logic runs.
+    if (normalizeMalformedEntryPath()) return;
+
     // TEMPORARY DEBUG: Log the actual hostname to help diagnose AppMySite URL issues
     console.log('🌐 APP LOADED ON:', window.location.hostname, '| Full URL:', window.location.href);
     console.log('🌐 Is WebView:', isLikelyEmbeddedWebView(), '| UA:', navigator.userAgent);
@@ -126,6 +148,9 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              {/* Common wrapper entry aliases */}
+              <Route path="/index.html" element={<Index />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/*" element={<AuthCallback />} />
               <Route path="/callback" element={<AuthCallback />} />
