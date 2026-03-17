@@ -34,7 +34,11 @@ const normalizeMalformedEntryPath = () => {
 
   // Some wrappers open SPA apps on /index.html or even /https://domain.tld,
   // which BrowserRouter treats as unknown routes and triggers NotFound.
-  const isCommonWrapperPath = lowerPath === '/index.html' || lowerPath === '/home' || lowerPath === '/home.html';
+  const isCommonWrapperPath =
+    lowerPath === '/index' ||
+    lowerPath === '/index.html' ||
+    lowerPath === '/home' ||
+    lowerPath === '/home.html';
   const isWrappedAbsoluteUrlPath = /^\/https?:\/\//i.test(pathname) || /^\/www\./i.test(pathname);
 
   if (!isCommonWrapperPath && !isWrappedAbsoluteUrlPath) return false;
@@ -149,6 +153,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               {/* Common wrapper entry aliases */}
+              <Route path="/index" element={<Index />} />
               <Route path="/index.html" element={<Index />} />
               <Route path="/home" element={<Index />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
