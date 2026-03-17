@@ -153,6 +153,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               {/* Common wrapper entry aliases */}
+              <Route path="/index" element={<Index />} />
               <Route path="/index.html" element={<Index />} />
               <Route path="/home" element={<Index />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
